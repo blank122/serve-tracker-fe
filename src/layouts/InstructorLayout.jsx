@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
-const DashboardLayout = ({ children, user }) => {
+const InstructorLayout = ({ children, user }) => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
@@ -81,4 +81,4 @@ const DashboardLayout = ({ children, user }) => {
   );
 };
 
-export default DashboardLayout;
+export default InstructorLayout;
