@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+// 1. Import your assets here
+import pnpLogo from '../../assets/img/left-logo.png';
+import policeBg from '../../assets/img/police-bg.jpg';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({ email: '', password: '', remember: false });
@@ -6,7 +9,6 @@ const LoginPage = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log("Logging in with:", formData);
-    // Add your API call to your ML backend here
   };
 
   return (
@@ -15,11 +17,12 @@ const LoginPage = () => {
       <div 
         className="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
         style={{
+          // 2. Use the imported variable for the background
           backgroundImage: `
             linear-gradient(90deg, rgba(2,6,23,.92) 0%, rgba(2,6,23,.62) 46%, rgba(2,6,23,.30) 100%),
             radial-gradient(1200px 600px at 15% 30%, rgba(59,130,246,.25), transparent 60%),
             radial-gradient(900px 500px at 80% 20%, rgba(16,185,129,.18), transparent 55%),
-            url('/img/police-bg.jpg')` 
+            url(${policeBg})` 
         }}
       />
 
@@ -28,7 +31,8 @@ const LoginPage = () => {
         <header className="w-full max-w-7xl mx-auto px-6 pt-6">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-white/10 ring-1 ring-white/20 flex items-center justify-center overflow-hidden">
-              <img src="/img/pnp-logo.png" className="h-full w-full object-cover" alt="Logo" />
+              {/* 3. Use the imported variable for the logo */}
+              <img src={pnpLogo} className="h-full w-full object-cover" alt="PNP Logo" />
             </div>
             <div className="leading-tight">
               <div className="text-white font-extrabold text-xl tracking-tight">ServeTrack</div>
@@ -75,7 +79,6 @@ const LoginPage = () => {
               {/* Right Side: Login Card */}
               <aside className="lg:col-span-5 xl:col-span-4">
                 <div className="relative group">
-                  {/* Glowing Border Effect */}
                   <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-emerald-500 rounded-[1.8rem] opacity-30 blur-sm group-hover:opacity-50 transition duration-1000"></div>
                   
                   <div className="relative bg-white/90 backdrop-blur-xl border border-white/40 rounded-[1.75rem] p-7 sm:p-8 shadow-2xl">
@@ -116,7 +119,11 @@ const LoginPage = () => {
 
                       <div className="flex items-center justify-between">
                         <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
-                          <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-blue-600" />
+                          <input 
+                            type="checkbox" 
+                            className="h-4 w-4 rounded border-slate-300 text-blue-600" 
+                            onChange={(e) => setFormData({...formData, remember: e.target.checked})}
+                          />
                           Remember me
                         </label>
                       </div>
@@ -147,7 +154,6 @@ const LoginPage = () => {
   );
 };
 
-// Sub-component for clean code
 const FeatureItem = ({ title, desc, icon }) => (
   <div className="flex gap-3 rounded-2xl bg-white/5 ring-1 ring-white/10 px-4 py-4 backdrop-blur-sm">
     <div className="mt-0.5 h-9 w-9 rounded-xl bg-white/10 flex items-center justify-center">
