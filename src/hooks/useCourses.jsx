@@ -9,7 +9,7 @@ export const useCourses = () => {
     const fetchCourses = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await api.get('/admin/courses'); // Adjust endpoint as needed
+            const response = await api.get('/courses'); // Adjust endpoint as needed
             const data = response.data || [];
             
             setCourses(data);
@@ -17,8 +17,10 @@ export const useCourses = () => {
             // Calculate quick stats for the chips
             setStats({
                 total: data.length,
-                active: data.filter(c => c.status === 'active').length,
-                finished: data.filter(c => c.status === 'finished').length
+                active: data.filter(c => c.status === 'starting').length,
+                finished: data.filter(c => c.status === 'completed').length,
+                upcoming: data.filter(c => c.status === 'not yet started').length
+
             });
         } catch (error) {
             console.error("Failed to fetch courses:", error);

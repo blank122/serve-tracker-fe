@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useCourses } from '../hooks/useCourses';
+import { useCourses } from '../../hooks/useCourses';
 import { Plus, Search, Download, Edit2, CheckCircle } from 'lucide-react';
 
 const CoursePage = () => {
@@ -7,7 +7,7 @@ const CoursePage = () => {
     const [searchTerm, setSearchTerm] = useState('');
 
     const filteredCourses = courses.filter(c => 
-        c.course_name.toLowerCase().includes(searchTerm.toLowerCase())
+        c.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
@@ -46,7 +46,7 @@ const CoursePage = () => {
             <section>
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Active</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredCourses.filter(c => c.status === 'active').map(course => (
+                    {filteredCourses.filter(c => c.status === 'starting').map(course => (
                         <CourseCard key={course.id} course={course} />
                     ))}
                 </div>
@@ -68,8 +68,8 @@ const CourseCard = ({ course }) => (
     <div className="bg-white border border-slate-100 p-6 rounded-[2rem] shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
         <div className="flex justify-between items-start mb-4">
             <div>
-                <h4 className="font-black text-slate-800 text-lg uppercase tracking-tight">{course.course_name}</h4>
-                <p className="text-slate-400 text-xs font-medium">{course.description || 'No description provided'}</p>
+                <h4 className="font-black text-slate-800 text-lg uppercase tracking-tight">{course.code}</h4>
+                <p className="text-slate-400 text-xs font-medium">{course.name || 'No description provided'}</p>
             </div>
             <span className="bg-green-50 text-green-600 text-[10px] font-black px-2 py-1 rounded-md uppercase">Active</span>
         </div>
