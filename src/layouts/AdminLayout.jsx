@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import pnpLogo from '../assets/img/pnp-logo.png';
-const AdminLayout = ({ children }) => {
+const AdminLayout = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
 
   const [user, setUser] = useState(() => {
@@ -57,8 +57,8 @@ const AdminLayout = ({ children }) => {
               key={item.name}
               to={item.path}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${location.pathname === item.path
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                  : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                : 'text-slate-400 hover:bg-white/5 hover:text-white'
                 }`}
             >
               {/* If your nav items have icons, render them here. 
@@ -109,7 +109,7 @@ const AdminLayout = ({ children }) => {
 
         {/* PAGE CONTENT */}
         <main className="p-8 overflow-y-auto">
-          {children}
+          <Outlet />
         </main>
       </div>
     </div>

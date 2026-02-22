@@ -13,6 +13,7 @@ import toast, { Toaster } from 'react-hot-toast'; // Import Toast
 import React, { useState, useEffect } from 'react';
 import { useAuth, AuthProvider } from '../context/AuthContext';
 import { useLocation } from 'react-router-dom';
+import RegistrarLayout from '../layouts/RegistrarLayout';
 
 const ProtectedRoute = ({ allowedRoles }) => {
     const { user } = useAuth();
@@ -59,6 +60,12 @@ const AppRoutes = () => {
                     <Route element={<ProtectedRoute allowedRoles={['instructor', 'admin']} />}>
                         <Route path="instructor" element={<InstructorLayout />}>
                             <Route path="dashboard" element={<InstructorDashboard />} />
+                        </Route>
+                    </Route>
+                    {/* Registrar */}
+                    <Route element={<ProtectedRoute allowedRoles={['registrar', 'admin']} />}>
+                        <Route path="registrar" element={<RegistrarLayout />}>
+                            <Route path="dashboard" element={<RegistrarDashboard />} />
                         </Route>
                     </Route>
                 </Routes>
