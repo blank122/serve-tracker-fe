@@ -5,56 +5,62 @@ import policeBg from '../../assets/img/police-bg.jpg';
 import { useNavigate } from 'react-router-dom'; // Assuming you use react-router
 import axios from 'axios'; // Import Axios
 import toast, { Toaster } from 'react-hot-toast'; // Import Toast
+import { useAuth } from '../../context/AuthContext'; // Import your hook
 
 const LoginPage = () => {
-  const [formData, setFormData] = useState({ email: '', password: '', remember: false });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { login } = useAuth(); // Destructure login function from context
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    const loadingToast = toast.loading('Logging in...');
 
     try {
-      const response = await axios.post('http://localhost:8000/auth/login', formData);
+      // 1. Call your API
+      const response = await axios.post('http://localhost:8000/auth/login', {
+        email,
+        password
+      });
 
-      // Log this to your console to see EXACTLY what the backend sends
-      console.log("Backend Response:", response.data);
+      // 2. Extract data from the backend response you shared earlier
+      // Response: { access_token: '...', role: 'admin', user_id: 1, status: 'approved' }
+      const { access_token, role, status } = response.data;
 
-      // Updated destructuring based on your FastAPI return
-      const { access_token, role, user_id, status } = response.data;
+      if (access_token) {
+        // 3. Optional: Block if not approved
+        if (status !== 'approved') {
+          toast.error("Your account is pending approval.", { id: loadingToast });
+          return;
+        }
 
-      // 1. Status Check
-      // if (status?.toLowerCase() !== 'approved') {
-      //   toast.error("Account pending approval.");
-      //   setLoading(false);
-      //   return;
-      // }
+        // 4. Update Global State via Context
+        // This saves to localStorage and sets the 'user' state internally
+        await login(response.data, access_token);
 
-      // 2. Store Data
-      localStorage.setItem('token', access_token);
-      localStorage.setItem('user',  JSON.stringify(response));
+        toast.success(`Welcome back, ${role}!`, { id: loadingToast });
 
-      toast.success(`Welcome back, ${role}!`);
-
-      // 3. Navigation (Wait a tiny bit so they see the success toast)
-      setTimeout(() => {
-        if (role === 'admin') navigate('/admin/dashboard');
-        else if (role === 'instructor') navigate('/instructor/dashboard');
-        else if (role === 'registrar') navigate('/registrar/dashboard');
-        else toast.error("Role not recognized");
-      }, 1000);
-
-    } catch (err) {
-      console.error(err);
-      const message = err.response?.data?.detail || "Connection failed";
-      toast.error(message);
-    } finally {
-      setLoading(false);
+        // 5. Direct Navigation based on role
+        const targetRole = role.toLowerCase();
+        if (targetRole === 'admin') {
+          navigate('/admin/dashboard');
+        } else if (targetRole === 'instructor') {
+          navigate('/instructor/dashboard');
+        } else if (targetRole === 'registrar') {
+          navigate('/registrar/dashboard');
+        } else {
+          navigate('/unauthorized');
+        }
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error(error.response?.data?.message || "Invalid credentials", { id: loadingToast });
     }
   };
-  
+
   return (
     <div className="min-h-screen antialiased text-slate-900 relative overflow-hidden">
       <Toaster />
@@ -149,10 +155,11 @@ const LoginPage = () => {
                         </span>
                         <input
                           type="email"
+                          value={email}
                           required
                           placeholder="Email address"
                           className="w-full rounded-xl border border-slate-200 bg-white px-11 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all"
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          onChange={(e) => setEmail(e.target.value)}
                         />
                       </div>
 
@@ -164,10 +171,11 @@ const LoginPage = () => {
                         </span>
                         <input
                           type="password"
+                          value={password}
                           required
                           placeholder="Password"
                           className="w-full rounded-xl border border-slate-200 bg-white px-11 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all"
-                          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                          onChange={(e) => setPassword(e.target.value)}
                         />
                       </div>
 

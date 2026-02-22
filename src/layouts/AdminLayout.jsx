@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-
+import pnpLogo from '../assets/img/pnp-logo.png';
 const AdminLayout = ({ children }) => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
 
@@ -36,33 +36,53 @@ const AdminLayout = ({ children }) => {
     <div className="min-h-screen bg-slate-50 flex">
       {/* SIDEBAR */}
       <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-slate-900 transition-all duration-300 flex flex-col border-r border-slate-800`}>
+        {/* Header Section with Logo */}
         <div className="p-6 flex items-center gap-3">
-          <div className="h-8 w-8 bg-blue-600 rounded-lg flex-shrink-0" />
-          {isSidebarOpen && <span className="text-white font-bold text-xl tracking-tight">ServeTrack</span>}
+          <img
+            src={pnpLogo}
+            alt="ServeTrack Logo"
+            className="h-10 w-10 object-contain flex-shrink-0"
+          />
+          {isSidebarOpen && (
+            <span className="text-white font-bold text-xl tracking-tight">
+              ServeTrack
+            </span>
+          )}
         </div>
 
+        {/* Navigation Links */}
         <nav className="flex-1 px-4 space-y-2 mt-4">
           {filteredNav.map((item) => (
             <Link
               key={item.name}
               to={item.path}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${location.pathname === item.path
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                  : 'text-slate-400 hover:bg-white/5 hover:text-white'
                 }`}
             >
-              <div className="w-5 h-5 bg-current opacity-20 rounded" /> {/* Placeholder for Icons */}
+              {/* If your nav items have icons, render them here. 
+            Otherwise, this remains a subtle placeholder */}
+              <div className="w-5 h-5 flex items-center justify-center">
+                {item.icon ? <item.icon size={20} /> : <div className="w-4 h-4 bg-current opacity-20 rounded" />}
+              </div>
               {isSidebarOpen && <span className="font-medium text-sm">{item.name}</span>}
             </Link>
           ))}
         </nav>
 
+        {/* Bottom Section / Logout */}
         <div className="p-4 border-t border-slate-800">
           <button
             onClick={() => navigate('/login')}
-            className="flex items-center gap-3 px-3 py-2 w-full text-slate-400 hover:text-red-400 transition-colors"
+            className="flex items-center gap-3 px-3 py-2 w-full text-slate-400 hover:text-red-400 transition-colors group"
           >
-            <div className="w-5 h-5 border-2 border-current rounded-full" />
+            <div className="w-5 h-5 flex items-center justify-center">
+              {/* Simple Logout Icon representation */}
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+              </svg>
+            </div>
             {isSidebarOpen && <span className="text-sm font-medium">Logout</span>}
           </button>
         </div>

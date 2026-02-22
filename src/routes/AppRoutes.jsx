@@ -11,79 +11,59 @@ import LoginPage from '../pages/authentication/LoginPage';
 import RegisterPage from '../pages/authentication/RegisterPage';
 import toast, { Toaster } from 'react-hot-toast'; // Import Toast
 import React, { useState, useEffect } from 'react';
+import { useAuth, AuthProvider } from '../context/AuthContext';
+import { useLocation } from 'react-router-dom';
 
-const ProtectedRoute = ({ user, allowedRoles }) => {
-    if (!user) return <Navigate to="/login" replace />;
+const ProtectedRoute = ({ allowedRoles }) => {
+    const { user } = useAuth();
+    const location = useLocation();
 
-    // 1. Check if the account is approved (Backend returns 'approved')
-    // if (user.status !== 'approved') {
-    //     toast.error("Your account is pending approval.");
-    //     return <Navigate to="/login" replace />;
-    // }
+    // 1. If no user is logged in, send to login and save the attempted path
+    if (!user) {
+        return <Navigate to="/login" state={{ from: location }} replace />;
+    }
 
-    // 2. Check Role (matches 'admin', 'instructor', etc. from your JSON)
+    // 2. Role-based check
+    // Note: I'm using user.role based on your backend response earlier.
+    // If your backend uses 'account_type', change user.role to user.account_type.
     const userRole = user.role?.toLowerCase();
-    // const isAllowed = allowedRoles.map(r => r.toLowerCase()).includes(userRole);
+    const isAllowed = allowedRoles.some(role => role.toLowerCase() === userRole);
 
-    // if (!isAllowed) {
-    //     return <Navigate to="/unauthorized" replace />;
-    // }
+    if (allowedRoles && !isAllowed) {
+        // Optional: Show a toast before redirecting
+        toast.error("You do not have permission to access this page.");
+        return <Navigate to="/unauthorized" replace />;
+    }
 
+    // 3. If all checks pass, render the child routes
     return <Outlet />;
 };
 
 const AppRoutes = () => {
-    // Auth State
-    const [user, setUser] = useState(() => {
-        const storedUser = localStorage.getItem('user');
-        return storedUser ? JSON.parse(storedUser) : null;
-    });
 
-    // Debugging: Watch the user state change in your console
-    useEffect(() => {
-        console.log("AppRoutes User State:", user);
-    }, [user]);
     return (
-        <BrowserRouter>
-            <Toaster position="top-center" reverseOrder={false} />
-            <Routes>
-                {/* Public Routes */}
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/unauthorized" element={<div>Access Denied</div>} />
+        <AuthProvider>
+            <BrowserRouter>
+                <Toaster position="top-center" />
+                <Routes>
+                    <Route path="/login" element={<LoginPage />} />
 
-                {/* 👮 ADMIN ROUTES */}
-                <Route element={<ProtectedRoute user={user} allowedRoles={['admin']} />}>
-                    <Route path="admin" element={<AdminLayout />}>
-                        {/* Note: No leading slash for nested routes */}
-                        <Route index element={<Navigate to="dashboard" />} />
-                        <Route path="dashboard" element={<AdminDashboard />} />
-                        <Route path="manage-users" element={<div>User Management</div>} />
+                    {/* Admin Only */}
+                    <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+                        <Route path="admin" element={<AdminLayout />}>
+                            <Route path="dashboard" element={<AdminDashboard />} />
+                        </Route>
                     </Route>
-                </Route>
 
-                {/* 👨‍🏫 INSTRUCTOR ROUTES */}
-                <Route element={<ProtectedRoute user={user} allowedRoles={['instructor', 'admin']} />}>
-                    <Route path="instructor" element={<InstructorLayout />}>
-                        <Route index element={<Navigate to="dashboard" />} />
-                        <Route path="dashboard" element={<InstructorDashboard />} />
+                    {/* Instructor & Admin */}
+                    <Route element={<ProtectedRoute allowedRoles={['instructor', 'admin']} />}>
+                        <Route path="instructor" element={<InstructorLayout />}>
+                            <Route path="dashboard" element={<InstructorDashboard />} />
+                        </Route>
                     </Route>
-                </Route>
-
-                {/* 📑 REGISTRAR ROUTES */}
-                <Route element={<ProtectedRoute user={user} allowedRoles={['registrar', 'admin']} />}>
-                    <Route path="registrar" element={<div>Registrar Layout Placeholder</div>}>
-                        <Route index element={<Navigate to="dashboard" />} />
-                        <Route path="dashboard" element={<RegistrarDashboard />} />
-                        <Route path="grades" element={<div>Grades Management</div>} />
-                    </Route>
-                </Route>
-
-                {/* Default redirect */}
-                <Route path="/" element={<Navigate to="/login" />} />
-                <Route path="*" element={<Navigate to="/login" />} />
-            </Routes>
-        </BrowserRouter>
+                </Routes>
+            </BrowserRouter>
+        </AuthProvider>
     );
 };
 
