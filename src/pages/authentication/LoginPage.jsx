@@ -2,13 +2,44 @@ import React, { useState } from 'react';
 // 1. Import your assets here
 import pnpLogo from '../../assets/img/left-logo.png';
 import policeBg from '../../assets/img/police-bg.jpg';
+import { useNavigate } from 'react-router-dom'; // Assuming you use react-router
+import axios from 'axios'; // Import Axios
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({ email: '', password: '', remember: false });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Logging in with:", formData);
+    setLoading(true);
+    setError('');
+
+    try {
+      // Replace with your actual backend URL
+      const response = await axios.post('http://localhost:8000/auth/login', {
+        email: formData.email,
+        password: formData.password
+      });
+
+      // Handle successful login
+      const { id, role, status } = response.data;
+
+      // Store user info (usually you'd use a JWT token here, but following your BE return)
+      localStorage.setItem('user', JSON.stringify({ id, role, status }));
+
+      // Redirect based on role or to a dashboard
+      console.log("Login successful:", response.data);
+      navigate('/dashboard');
+
+    } catch (err) {
+      // Handle errors (401 Unauthorized, etc.)
+      const message = err.response?.data?.detail || "Something went wrong. Please try again.";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
