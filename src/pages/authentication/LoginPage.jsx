@@ -201,6 +201,7 @@ const LoginPage = () => {
                         No Account yet? <span className="font-semibold text-blue-600 hover:underline cursor-pointer">Register</span>
                       </p>
                     </form>
+                    
                   </div>
                 </div>
               </aside>
