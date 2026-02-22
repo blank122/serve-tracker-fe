@@ -26,11 +26,11 @@ const LoginPage = () => {
       const { access_token, role, user_id, status } = response.data;
 
       // 1. Status Check
-      if (status?.toLowerCase() !== 'approved' && status?.toLowerCase() !== 'active') {
-        toast.error("Account pending approval.");
-        setLoading(false);
-        return;
-      }
+      // if (status?.toLowerCase() !== 'approved') {
+      //   toast.error("Account pending approval.");
+      //   setLoading(false);
+      //   return;
+      // }
 
       // 2. Store Data
       localStorage.setItem('token', access_token);

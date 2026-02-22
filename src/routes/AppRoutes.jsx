@@ -10,34 +10,42 @@ import AdminDashboard from '../pages/admin/AdminDashboard';
 import LoginPage from '../pages/authentication/LoginPage';
 import RegisterPage from '../pages/authentication/RegisterPage';
 import toast, { Toaster } from 'react-hot-toast'; // Import Toast
+import React, { useState, useEffect } from 'react';
 
 const ProtectedRoute = ({ user, allowedRoles }) => {
     if (!user) return <Navigate to="/login" replace />;
 
     // 1. Check if the account is approved (Backend returns 'approved')
-    if (user.status !== 'approved') {
-        toast.error("Your account is pending approval.");
-        return <Navigate to="/login" replace />;
-    }
+    // if (user.status !== 'approved') {
+    //     toast.error("Your account is pending approval.");
+    //     return <Navigate to="/login" replace />;
+    // }
 
     // 2. Check Role (matches 'admin', 'instructor', etc. from your JSON)
     const userRole = user.role?.toLowerCase();
-    const isAllowed = allowedRoles.map(r => r.toLowerCase()).includes(userRole);
+    // const isAllowed = allowedRoles.map(r => r.toLowerCase()).includes(userRole);
 
-    if (!isAllowed) {
-        return <Navigate to="/unauthorized" replace />;
-    }
+    // if (!isAllowed) {
+    //     return <Navigate to="/unauthorized" replace />;
+    // }
 
     return <Outlet />;
 };
 
 const AppRoutes = () => {
     // Auth State
-    const storedUser = localStorage.getItem('user');
-    const user = storedUser ? JSON.parse(storedUser) : null;
+    const [user, setUser] = useState(() => {
+        const storedUser = localStorage.getItem('user');
+        return storedUser ? JSON.parse(storedUser) : null;
+    });
+
+    // Debugging: Watch the user state change in your console
+    useEffect(() => {
+        console.log("AppRoutes User State:", user);
+    }, [user]);
     return (
         <BrowserRouter>
-        <Toaster position="top-center" reverseOrder={false} />
+            <Toaster position="top-center" reverseOrder={false} />
             <Routes>
                 {/* Public Routes */}
                 <Route path="/login" element={<LoginPage />} />
