@@ -8,12 +8,11 @@ import RegistrarDashboard from '../pages/registrar/RegistrarDashboard';
 import InstructorDashboard from '../pages/instructor/InstructorDashboard';
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import LoginPage from '../pages/authentication/LoginPage';
-import RegisterPage from '../pages/authentication/RegisterPage';
 import toast, { Toaster } from 'react-hot-toast'; // Import Toast
-import React, { useState, useEffect } from 'react';
 import { useAuth, AuthProvider } from '../context/AuthContext';
 import { useLocation } from 'react-router-dom';
 import RegistrarLayout from '../layouts/RegistrarLayout';
+import CoursePage from '../pages/admin/CoursePage';
 
 const ProtectedRoute = ({ allowedRoles }) => {
     const { user } = useAuth();
@@ -53,6 +52,8 @@ const AppRoutes = () => {
                     <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
                         <Route path="admin" element={<AdminLayout />}>
                             <Route path="dashboard" element={<AdminDashboard />} />
+                            <Route path="courses" element={<CoursePage />} />
+
                         </Route>
                     </Route>
 

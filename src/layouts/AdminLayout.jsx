@@ -25,7 +25,7 @@ const AdminLayout = () => {
       icon: 'grid'
     },
     { name: 'Settings', path: '/settings', roles: ['admin', 'instructor', 'registrar'], icon: 'settings' },
-    { name: 'Courses', path: '/registrar/courses', roles: ['admin', 'registrar'], icon: 'users' },
+    { name: 'Courses', path: '/admin/courses', roles: ['admin'], icon: 'users' },
   ];
 
   // 2. Add a check to ensure user and user.role exist before filtering

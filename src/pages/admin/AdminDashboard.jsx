@@ -49,25 +49,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* PERFORMANCE RANKINGS */}
-        <div className="space-y-4">
-          {/* Use ?. and || [] to stay safe */}
-          {(rankings || []).map((student, i) => (
-            <RankingRow
-              key={i}
-              rank={i + 1}
-              name={`${student[0]} ${student[1]}`}
-              section={student[2]}
-              grade={student[3]}
-            />
-          ))}
-
-          {/* Optional: Show this if data is loaded but the array is empty */}
-          {!loading && (!rankings || rankings.length === 0) && (
-            <p className="text-slate-500 text-sm text-center py-4">
-              No student data found for the current year.
-            </p>
-          )}
-        </div>
+        
       </div>
     </div>
   );
