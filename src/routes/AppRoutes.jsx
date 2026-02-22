@@ -9,21 +9,35 @@ import InstructorDashboard from '../pages/instructor/InstructorDashboard';
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import LoginPage from '../pages/authentication/LoginPage';
 import RegisterPage from '../pages/authentication/RegisterPage';
+import toast, { Toaster } from 'react-hot-toast'; // Import Toast
 
-// --- 1. Protected Route Component ---
 const ProtectedRoute = ({ user, allowedRoles }) => {
     if (!user) return <Navigate to="/login" replace />;
-    if (!allowedRoles.includes(user.role)) return <Navigate to="/unauthorized" replace />;
-    
-    return <Outlet />; // This renders the child routes
+
+    // 1. Check if the account is approved (Backend returns 'approved')
+    if (user.status !== 'approved') {
+        toast.error("Your account is pending approval.");
+        return <Navigate to="/login" replace />;
+    }
+
+    // 2. Check Role (matches 'admin', 'instructor', etc. from your JSON)
+    const userRole = user.role?.toLowerCase();
+    const isAllowed = allowedRoles.map(r => r.toLowerCase()).includes(userRole);
+
+    if (!isAllowed) {
+        return <Navigate to="/unauthorized" replace />;
+    }
+
+    return <Outlet />;
 };
 
 const AppRoutes = () => {
     // Auth State
-    const user = { role: 'Instructor' }; 
-
+    const storedUser = localStorage.getItem('user');
+    const user = storedUser ? JSON.parse(storedUser) : null;
     return (
         <BrowserRouter>
+        <Toaster position="top-center" reverseOrder={false} />
             <Routes>
                 {/* Public Routes */}
                 <Route path="/login" element={<LoginPage />} />
@@ -31,7 +45,7 @@ const AppRoutes = () => {
                 <Route path="/unauthorized" element={<div>Access Denied</div>} />
 
                 {/* 👮 ADMIN ROUTES */}
-                <Route element={<ProtectedRoute user={user} allowedRoles={['Admin']} />}>
+                <Route element={<ProtectedRoute user={user} allowedRoles={['admin']} />}>
                     <Route path="admin" element={<AdminLayout />}>
                         {/* Note: No leading slash for nested routes */}
                         <Route index element={<Navigate to="dashboard" />} />
@@ -41,7 +55,7 @@ const AppRoutes = () => {
                 </Route>
 
                 {/* 👨‍🏫 INSTRUCTOR ROUTES */}
-                <Route element={<ProtectedRoute user={user} allowedRoles={['Instructor', 'Admin']} />}>
+                <Route element={<ProtectedRoute user={user} allowedRoles={['instructor', 'admin']} />}>
                     <Route path="instructor" element={<InstructorLayout />}>
                         <Route index element={<Navigate to="dashboard" />} />
                         <Route path="dashboard" element={<InstructorDashboard />} />
@@ -49,8 +63,8 @@ const AppRoutes = () => {
                 </Route>
 
                 {/* 📑 REGISTRAR ROUTES */}
-                <Route element={<ProtectedRoute user={user} allowedRoles={['Registrar', 'Admin']} />}>
-                    <Route path="registrar" element={<div>Registrar Layout Placeholder</div>}> 
+                <Route element={<ProtectedRoute user={user} allowedRoles={['registrar', 'admin']} />}>
+                    <Route path="registrar" element={<div>Registrar Layout Placeholder</div>}>
                         <Route index element={<Navigate to="dashboard" />} />
                         <Route path="dashboard" element={<RegistrarDashboard />} />
                         <Route path="grades" element={<div>Grades Management</div>} />

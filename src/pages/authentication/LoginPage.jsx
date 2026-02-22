@@ -4,6 +4,7 @@ import pnpLogo from '../../assets/img/left-logo.png';
 import policeBg from '../../assets/img/police-bg.jpg';
 import { useNavigate } from 'react-router-dom'; // Assuming you use react-router
 import axios from 'axios'; // Import Axios
+import toast, { Toaster } from 'react-hot-toast'; // Import Toast
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({ email: '', password: '', remember: false });
@@ -14,50 +15,41 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
 
     try {
-      const response = await axios.post('http://localhost:8000/auth/login', {
-        email: formData.email,
-        password: formData.password
-      });
+      const response = await axios.post('http://localhost:8000/auth/login', formData);
 
-      const { id, role, status } = response.data;
+      // Log this to your console to see EXACTLY what the backend sends
+      console.log("Backend Response:", response.data);
 
-      // 1. Only allow login if status is 'approved'
-      // Adjust the string 'approved' if your DB uses 'Approved' or 'active'
-      if (status?.toLowerCase() !== 'approved') {
-        setError("Your account is pending approval. Please contact the administrator.");
+      // Updated destructuring based on your FastAPI return
+      const { access_token, role, user_id, status } = response.data;
+
+      // 1. Status Check
+      if (status?.toLowerCase() !== 'approved' && status?.toLowerCase() !== 'active') {
+        toast.error("Account pending approval.");
         setLoading(false);
         return;
       }
 
-      // Store user info
-      const userData = { id, role, status };
-      localStorage.setItem('user', JSON.stringify(userData));
+      // 2. Store Data
+      localStorage.setItem('token', access_token);
+      localStorage.setItem('user',  JSON.stringify(response));
 
-      // 2. Navigate based on role
-      // These paths match your Route definitions (e.g., path="admin", path="instructor")
-      switch (role) {
-        case 'Admin':
-          navigate('/admin/dashboard');
-          break;
-        case 'Instructor':
-          navigate('/instructor/dashboard');
-          break;
-        case 'Registrar':
-          navigate('/registrar/dashboard');
-          break;
-        default:
-          setError("User role not recognized.");
-          localStorage.removeItem('user'); // Cleanup if role is invalid
-      }
+      toast.success(`Welcome back, ${role}!`);
 
-      console.log("Login successful:", response.data);
+      // 3. Navigation (Wait a tiny bit so they see the success toast)
+      setTimeout(() => {
+        if (role === 'admin') navigate('/admin/dashboard');
+        else if (role === 'instructor') navigate('/instructor/dashboard');
+        else if (role === 'registrar') navigate('/registrar/dashboard');
+        else toast.error("Role not recognized");
+      }, 1000);
 
     } catch (err) {
-      const message = err.response?.data?.detail || "Invalid email or password.";
-      setError(message);
+      console.error(err);
+      const message = err.response?.data?.detail || "Connection failed";
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -65,6 +57,7 @@ const LoginPage = () => {
   
   return (
     <div className="min-h-screen antialiased text-slate-900 relative overflow-hidden">
+      <Toaster />
       {/* Background Hero Section */}
       <div
         className="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
