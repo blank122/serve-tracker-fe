@@ -17,31 +17,52 @@ const LoginPage = () => {
     setError('');
 
     try {
-      // Replace with your actual backend URL
       const response = await axios.post('http://localhost:8000/auth/login', {
         email: formData.email,
         password: formData.password
       });
 
-      // Handle successful login
       const { id, role, status } = response.data;
 
-      // Store user info (usually you'd use a JWT token here, but following your BE return)
-      localStorage.setItem('user', JSON.stringify({ id, role, status }));
+      // 1. Only allow login if status is 'approved'
+      // Adjust the string 'approved' if your DB uses 'Approved' or 'active'
+      if (status?.toLowerCase() !== 'approved') {
+        setError("Your account is pending approval. Please contact the administrator.");
+        setLoading(false);
+        return;
+      }
 
-      // Redirect based on role or to a dashboard
+      // Store user info
+      const userData = { id, role, status };
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      // 2. Navigate based on role
+      // These paths match your Route definitions (e.g., path="admin", path="instructor")
+      switch (role) {
+        case 'Admin':
+          navigate('/admin/dashboard');
+          break;
+        case 'Instructor':
+          navigate('/instructor/dashboard');
+          break;
+        case 'Registrar':
+          navigate('/registrar/dashboard');
+          break;
+        default:
+          setError("User role not recognized.");
+          localStorage.removeItem('user'); // Cleanup if role is invalid
+      }
+
       console.log("Login successful:", response.data);
-      navigate('/dashboard');
 
     } catch (err) {
-      // Handle errors (401 Unauthorized, etc.)
-      const message = err.response?.data?.detail || "Something went wrong. Please try again.";
+      const message = err.response?.data?.detail || "Invalid email or password.";
       setError(message);
     } finally {
       setLoading(false);
     }
   };
-
+  
   return (
     <div className="min-h-screen antialiased text-slate-900 relative overflow-hidden">
       {/* Background Hero Section */}
