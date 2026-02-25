@@ -12,7 +12,8 @@ import toast, { Toaster } from 'react-hot-toast'; // Import Toast
 import { useAuth, AuthProvider } from '../context/AuthContext';
 import { useLocation } from 'react-router-dom';
 import RegistrarLayout from '../layouts/RegistrarLayout';
-import CoursePage from '../pages/admin/CoursePage';
+import CoursePage from '../pages/courses/CoursePage';
+import CourseContent from '../pages/courses/CourseContent';
 
 const ProtectedRoute = ({ allowedRoles }) => {
     const { user } = useAuth();
@@ -54,6 +55,8 @@ const AppRoutes = () => {
                         <Route path="admin" element={<AdminLayout />}>
                             <Route path="dashboard" element={<AdminDashboard />} />
                             <Route path="courses" element={<CoursePage />} />
+                            <Route path="course-content" element={<CourseContent />} />
+
 
                         </Route>
                     </Route>

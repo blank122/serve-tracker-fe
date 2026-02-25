@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useCourses } from '../../hooks/useCourses';
 import { Plus, Search, Download, Edit2, CheckCircle } from 'lucide-react';
+import { Link } from "react-router-dom";
 
 const CoursePage = () => {
     const { courses, stats, loading } = useCourses();
@@ -116,8 +117,8 @@ const CourseCard = ({ course }) => (
                 <p className="text-slate-400 text-xs font-medium line-clamp-1">{course.name || 'No description provided'}</p>
             </div>
             <span className={`text-[10px] font-black px-2 py-1 rounded-md uppercase ${course.status === 'starting' ? 'bg-green-50 text-green-600' :
-                    course.status === 'completed' ? 'bg-blue-50 text-blue-600' :
-                        'bg-slate-100 text-slate-500'
+                course.status === 'completed' ? 'bg-blue-50 text-blue-600' :
+                    'bg-slate-100 text-slate-500'
                 }`}>
                 {course.status === 'starting' ? 'Active' :
                     course.status === 'completed' ? 'Finished' :
@@ -137,6 +138,13 @@ const CourseCard = ({ course }) => (
         {/* Action Buttons */}
         <div className="flex justify-between items-center pt-4 border-t border-slate-50">
             <div className="flex gap-2">
+                <Link
+                    to="/admin/course-content" // Added the leading slash
+                    onClick={(e) => e.stopPropagation()} // Keep this to prevent CourseCard navigation
+                    className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors"
+                >
+                    <Edit2 size={16} />
+                </Link>
                 <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors"><Edit2 size={16} /></button>
                 <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors"><Download size={16} /></button>
             </div>
