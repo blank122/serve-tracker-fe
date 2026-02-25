@@ -2,10 +2,23 @@ import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSections } from '../../hooks/useSections'; // Path to hook above
 import { ChevronRight, Search, Plus, Users, Layers, MoreVertical, Calendar, Loader2, ArrowUpRight } from 'lucide-react';
+import RosterModal from './RosterModal';
 const CourseContent = () => {
     const { courseId } = useParams();
     const { sections, stats, loading } = useSections(courseId);
     const [searchTerm, setSearchTerm] = useState('');
+    const [isRosterOpen, setIsRosterOpen] = useState(false);
+    const [selectedSection, setSelectedSection] = useState(null);
+
+    const handleManageRoster = (section) => {
+        console.log("📋 handleManageRoster called with section:", section);
+        console.log("Section ID:", section.id);
+        console.log("Section name:", section.section_name);
+        console.log("Full section object:", JSON.stringify(section, null, 2));
+
+        setSelectedSection(section);
+        setIsRosterOpen(true);
+    };
 
     const filteredSections = sections.filter(sec =>
         sec.section_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -19,7 +32,7 @@ const CourseContent = () => {
     );
 
     return (
-        <div className="space-y-6"> 
+        <div className="space-y-6">
             {/* --- Breadcrumbs --- */}
             <nav className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
                 <span className="text-slate-400 hover:text-blue-600 cursor-pointer transition-colors">Courses</span>
@@ -61,6 +74,7 @@ const CourseContent = () => {
                 {filteredSections.map((section) => (
                     <SectionCard
                         key={section.id}
+                        onManage={() => handleManageRoster(section)}
                         name={section.section_name}
                         studentCount={section.total_students || 0}
                         schedule={section.schedule || 'TBA'}
@@ -68,6 +82,12 @@ const CourseContent = () => {
                     />
                 ))}
             </div>
+            {/* Modal Placement */}
+            <RosterModal
+                isOpen={isRosterOpen}
+                onClose={() => setIsRosterOpen(false)}
+                section={selectedSection}
+            />
         </div>
     );
 };
@@ -81,7 +101,7 @@ const StatChip = ({ label, count, color, icon }) => (
     </div>
 );
 
-const SectionCard = ({ name, studentCount, schedule, room }) => (
+const SectionCard = ({ name, studentCount, schedule, room, onManage }) => (
     <div className="bg-white border border-slate-100 p-6 rounded-[2rem] shadow-sm hover:shadow-md transition-all group cursor-pointer relative overflow-hidden">
         {/* Decorative corner accent */}
         <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -97,19 +117,11 @@ const SectionCard = ({ name, studentCount, schedule, room }) => (
                 </div>
             </div>
 
-            <div className="space-y-3 mb-6">
-                <div className="flex items-center gap-2 text-slate-500 text-xs">
-                    <Calendar size={14} className="text-slate-300" />
-                    <span>{schedule}</span>
-                </div>
-                <div className="flex items-center gap-2 text-slate-500 text-xs">
-                    <div className="w-3.5 h-3.5 rounded bg-slate-100 flex items-center justify-center text-[8px] font-bold">R</div>
-                    <span>{room}</span>
-                </div>
-            </div>
-
             <div className="mt-auto pt-4 border-t border-slate-50 flex justify-between items-center">
-                <button className="text-xs font-bold text-slate-400 hover:text-blue-600 transition-colors uppercase tracking-widest">
+                <button
+                    onClick={onManage} // Now triggers the modal
+                    className="text-xs font-bold text-slate-400 hover:text-blue-600 transition-colors uppercase tracking-widest"
+                >
                     Manage Roster
                 </button>
                 <button className="p-2 hover:bg-slate-50 rounded-lg text-slate-300 transition-colors">
