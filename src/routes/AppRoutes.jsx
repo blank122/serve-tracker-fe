@@ -46,6 +46,7 @@ const AppRoutes = () => {
             <BrowserRouter>
                 <Toaster position="top-center" />
                 <Routes>
+                    <Route path="/" element={<LoginPage />} />
                     <Route path="/login" element={<LoginPage />} />
 
                     {/* Admin Only */}

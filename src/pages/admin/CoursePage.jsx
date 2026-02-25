@@ -5,10 +5,20 @@ import { Plus, Search, Download, Edit2, CheckCircle } from 'lucide-react';
 const CoursePage = () => {
     const { courses, stats, loading } = useCourses();
     const [searchTerm, setSearchTerm] = useState('');
+    // 1. Add state for the active tab
+    const [currentTab, setCurrentTab] = useState('starting');
 
-    const filteredCourses = courses.filter(c => 
-        c.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredCourses = courses.filter(c =>
+        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.code.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    // 2. Define tab configuration for easy mapping
+    const tabs = [
+        { id: 'starting', label: 'Active', count: filteredCourses.filter(c => c.status === 'starting').length },
+        { id: 'completed', label: 'Finished', count: filteredCourses.filter(c => c.status === 'completed').length },
+        { id: 'not yet started', label: 'Upcoming', count: filteredCourses.filter(c => c.status === 'not yet started').length },
+    ];
 
     return (
         <div className="space-y-6">
@@ -34,7 +44,7 @@ const CoursePage = () => {
             {/* --- Search Bar --- */}
             <div className="relative group">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
-                <input 
+                <input
                     type="text"
                     placeholder="Search courses... (/)"
                     className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all shadow-sm"
@@ -42,14 +52,48 @@ const CoursePage = () => {
                 />
             </div>
 
-            {/* --- Active Section --- */}
-            <section>
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Active</h3>
+            {/* --- 3. Tab Navigation --- */}
+            <div className="flex gap-8 border-b border-slate-100">
+                {tabs.map((tab) => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setCurrentTab(tab.id)}
+                        className={`pb-4 text-sm font-bold uppercase tracking-widest transition-all relative ${currentTab === tab.id ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'
+                            }`}
+                    >
+                        {tab.label}
+                        <span className={`ml-2 px-2 py-0.5 rounded-full text-[10px] ${currentTab === tab.id ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-500'
+                            }`}>
+                            {tab.count}
+                        </span>
+                        {/* Animated Underline */}
+                        {currentTab === tab.id && (
+                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full" />
+                        )}
+                    </button>
+                ))}
+            </div>
+
+            {/* --- 4. Dynamic Content Section --- */}
+            <section className="min-h-[400px]">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredCourses.filter(c => c.status === 'starting').map(course => (
-                        <CourseCard key={course.id} course={course} />
-                    ))}
+                    {filteredCourses
+                        .filter(c => c.status === currentTab)
+                        .map(course => (
+                            <CourseCard key={course.id} course={course} />
+                        ))
+                    }
                 </div>
+
+                {/* Empty State */}
+                {filteredCourses.filter(c => c.status === currentTab).length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                        <div className="bg-slate-50 p-4 rounded-full mb-4">
+                            <Search size={32} />
+                        </div>
+                        <p className="font-medium text-sm">No {currentTab.replace('starting', 'active')} courses found.</p>
+                    </div>
+                )}
             </section>
         </div>
     );
@@ -69,13 +113,20 @@ const CourseCard = ({ course }) => (
         <div className="flex justify-between items-start mb-4">
             <div>
                 <h4 className="font-black text-slate-800 text-lg uppercase tracking-tight">{course.code}</h4>
-                <p className="text-slate-400 text-xs font-medium">{course.name || 'No description provided'}</p>
+                <p className="text-slate-400 text-xs font-medium line-clamp-1">{course.name || 'No description provided'}</p>
             </div>
-            <span className="bg-green-50 text-green-600 text-[10px] font-black px-2 py-1 rounded-md uppercase">Active</span>
+            <span className={`text-[10px] font-black px-2 py-1 rounded-md uppercase ${course.status === 'starting' ? 'bg-green-50 text-green-600' :
+                    course.status === 'completed' ? 'bg-blue-50 text-blue-600' :
+                        'bg-slate-100 text-slate-500'
+                }`}>
+                {course.status === 'starting' ? 'Active' :
+                    course.status === 'completed' ? 'Finished' :
+                        'Upcoming'}
+            </span>
         </div>
 
         {/* Section Chips */}
-        <div className="flex gap-2 mb-8">
+        <div className="flex flex-wrap gap-2 mb-8">
             {course.sections?.map(sec => (
                 <span key={sec.id} className="px-3 py-1 bg-slate-50 border border-slate-100 text-slate-500 text-[10px] font-bold rounded-full">
                     {sec.section_name}
