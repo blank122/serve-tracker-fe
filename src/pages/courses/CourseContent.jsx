@@ -1,38 +1,37 @@
 import React, { useState } from 'react';
-import { 
-    ChevronRight, 
-    Search, 
-    Plus, 
-    Users, 
-    Layers, 
-    MoreVertical, 
-    ArrowUpRight,
-    Calendar
-} from 'lucide-react';
-
+import { useParams } from 'react-router-dom';
+import { useSections } from '../../hooks/useSections'; // Path to hook above
+import { ChevronRight, Search, Plus, Users, Layers, MoreVertical, Calendar, Loader2, ArrowUpRight } from 'lucide-react';
 const CourseContent = () => {
+    const { courseId } = useParams();
+    const { sections, stats, loading } = useSections(courseId);
     const [searchTerm, setSearchTerm] = useState('');
 
-    // Static Data for the "Course" we are currently viewing
-    const courseDetails = {
-        code: "CS101",
-        name: "Introduction to Computer Science"
-    };
+    const filteredSections = sections.filter(sec =>
+        sec.section_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        sec.room?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (loading) return (
+        <div className="flex h-96 items-center justify-center text-slate-400">
+            <Loader2 className="animate-spin mr-2" /> Loading sections...
+        </div>
+    );
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6"> 
             {/* --- Breadcrumbs --- */}
             <nav className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
                 <span className="text-slate-400 hover:text-blue-600 cursor-pointer transition-colors">Courses</span>
                 <ChevronRight size={14} className="text-slate-300" />
-                <span className="text-slate-800">{courseDetails.code}</span>
+                <span className="text-slate-800">Course ID: {courseId}</span>
             </nav>
 
-            {/* --- Header Section --- */}
+            {/* --- Header --- */}
             <div className="flex justify-between items-start">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800">Sections Management</h1>
-                    <p className="text-slate-500 text-sm">Managing all class groups for <span className="text-slate-800 font-semibold">{courseDetails.name}</span></p>
+                    <p className="text-slate-500 text-sm">Reviewing active class groups and enrollment stats.</p>
                 </div>
                 <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-blue-200">
                     <Plus size={18} />
@@ -40,53 +39,34 @@ const CourseContent = () => {
                 </button>
             </div>
 
-            {/* --- Stat Chips --- */}
+            {/* --- Stats --- */}
             <div className="flex gap-3">
-                <StatChip 
-                    label="Total Sections" 
-                    count="8" 
-                    color="bg-slate-100 text-slate-600" 
-                    icon={<Layers size={14} />} 
-                />
-                <StatChip 
-                    label="Total Students" 
-                    count="324" 
-                    color="bg-blue-50 text-blue-600" 
-                    icon={<Users size={14} />} 
-                />
+                <StatChip label="Total Sections" count={stats.totalSections} color="bg-slate-100 text-slate-600" icon={<Layers size={14} />} />
+                <StatChip label="Total Students" count={stats.totalStudents} color="bg-blue-50 text-blue-600" icon={<Users size={14} />} />
             </div>
 
-            {/* --- Search Bar --- */}
+            {/* --- Search --- */}
             <div className="relative group">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
                 <input
                     type="text"
-                    placeholder="Search sections by name or room..."
+                    placeholder="Search sections..."
                     className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all shadow-sm"
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
 
-            {/* --- Sections Grid --- */}
+            {/* --- Grid --- */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <SectionCard 
-                    name="Section A" 
-                    studentCount={42} 
-                    schedule="Mon/Wed 2:00 PM - 4:00 PM" 
-                    room="Lab 302"
-                />
-                <SectionCard 
-                    name="Section B" 
-                    studentCount={38} 
-                    schedule="Tue/Thu 10:00 AM - 12:00 PM" 
-                    room="Room 105"
-                />
-                <SectionCard 
-                    name="Section C" 
-                    studentCount={45} 
-                    schedule="Fri 1:00 PM - 5:00 PM" 
-                    room="Lab 301"
-                />
+                {filteredSections.map((section) => (
+                    <SectionCard
+                        key={section.id}
+                        name={section.section_name}
+                        studentCount={section.total_students || 0}
+                        schedule={section.schedule || 'TBA'}
+                        room={section.room || 'No room assigned'}
+                    />
+                ))}
             </div>
         </div>
     );

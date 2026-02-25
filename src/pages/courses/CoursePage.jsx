@@ -139,8 +139,8 @@ const CourseCard = ({ course }) => (
         <div className="flex justify-between items-center pt-4 border-t border-slate-50">
             <div className="flex gap-2">
                 <Link
-                    to="/admin/course-content" // Added the leading slash
-                    onClick={(e) => e.stopPropagation()} // Keep this to prevent CourseCard navigation
+                    to={`/admin/course-content/${course.id}`} // Using template literals to pass the ID
+                    onClick={(e) => e.stopPropagation()}
                     className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors"
                 >
                     <Edit2 size={16} />
