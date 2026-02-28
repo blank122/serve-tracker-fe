@@ -143,9 +143,9 @@ const CourseCard = ({ course }) => (
                     onClick={(e) => e.stopPropagation()}
                     className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors"
                 >
-                    <Edit2 size={16} />
+                    <ArrowUpRight size={16} />
                 </Link>
-                <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors"><ArrowUpRight size={16} /></button>
+                <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors"><Edit2 size={16} /></button>
                 <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors"><Download size={16} /></button>
             </div>
             <button className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all">

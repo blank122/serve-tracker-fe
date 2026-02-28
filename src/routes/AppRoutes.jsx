@@ -14,6 +14,7 @@ import { useLocation } from 'react-router-dom';
 import RegistrarLayout from '../layouts/RegistrarLayout';
 import CoursePage from '../pages/courses/CoursePage';
 import CourseContent from '../pages/courses/CourseContent';
+import SectionModulePage from '../pages/courses/SectionModulePage';
 
 const ProtectedRoute = ({ allowedRoles }) => {
     const { user } = useAuth();
@@ -56,6 +57,7 @@ const AppRoutes = () => {
                             <Route path="dashboard" element={<AdminDashboard />} />
                             <Route path="courses" element={<CoursePage />} />
                             <Route path="course-content/:courseId" element={<CourseContent />} />
+                            <Route path="section/:sectionId/modules" element={<SectionModulePage />} />
 
                         </Route>
                     </Route>
