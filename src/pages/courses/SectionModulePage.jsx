@@ -61,7 +61,7 @@ const SectionModulePage = ({ sectionId }) => {
                     <div>
                         <h1 className="text-3xl font-bold text-slate-800">Section Curriculum</h1>
                         <p className="text-slate-500 mt-2">
-                            {moduleStats.totalModules} Subjects • {moduleStats.totalHours} Total Contact Hours
+                            {moduleStats.totalModules} Subjects • 748 Total Contact Hours
                         </p>
                     </div>
                     
