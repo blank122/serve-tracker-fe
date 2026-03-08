@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { BookOpen, RefreshCw, ArrowLeft, Table as TableIcon, X, FileSpreadsheet } from 'lucide-react';
+import { BookOpen, RefreshCw, ArrowLeft, Table as TableIcon, X, Download, FileSpreadsheet, GraduationCap, Clock } from 'lucide-react';
 import ModuleCatalog from './ModuleCatalog';
 import api from '../../api/axios';
 import MasterGradesModal from './MasterGradesModal';
@@ -54,15 +54,6 @@ const SectionModulePage = ({ sectionId, courseName, activeSectionName }) => {
     useEffect(() => {
         fetchModules();
     }, [sectionId]);
-
-    const exportToExcel = (data, fileName = 'MasterSheet_Export.xlsx') => {
-        const worksheet = XLSX.utils.json_to_sheet(data);
-        const workbook = XLSX.utils.book_new();
-
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Grades");
-
-        XLSX.writeFile(workbook, fileName);
-    };
 
     const calculateStudentMetrics = (student, data) => {
         let totalAcadPoints = 0;
@@ -171,27 +162,53 @@ const SectionModulePage = ({ sectionId, courseName, activeSectionName }) => {
     return (
         <div className="min-h-screen bg-slate-50">
             <div className="max-w-7xl mx-auto p-6">
-                <header className="mb-8 flex justify-between items-end">
-                    <div>
-                        <h1 className="text-3xl font-bold text-slate-800">Section Curriculum</h1>
-                        <p className="text-slate-500 mt-2">
-                            {moduleStats.totalModules} Subjects • 748 Total Contact Hours
-                        </p>
-                    </div>
+                <header className="mb-10">
+                    {/* Breadcrumb Navigation */}
+                    <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+                        {/* Left Side: Titles & Stats */}
+                        <div className="space-y-1">
+                            <h1 className="text-4xl font-black text-slate-900 tracking-tight">
+                                Section Curriculum
+                            </h1>
+                            <div className="flex items-center gap-3 text-slate-500 font-semibold text-sm">
+                                <span className="flex items-center gap-1.5 bg-blue-50 text-blue-700 px-3 py-1 rounded-full border border-blue-100">
+                                    <BookOpen size={14} />
+                                    {moduleStats.totalModules} Subjects
+                                </span>
+                                <span className="flex items-center gap-1.5 bg-slate-100 text-slate-600 px-3 py-1 rounded-full border border-slate-200">
+                                    <Clock size={14} />
+                                    748 Contact Hours
+                                </span>
+                            </div>
+                        </div>
 
-                    <button
-                        onClick={fetchMasterSheet}
-                        className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg font-medium transition-all shadow-sm"
-                    >
-                        <FileSpreadsheet size={18} />
-                        View Master Grades
-                    </button>
-                    <button
-                        onClick={handleExportClick}
-                        className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg font-medium transition-all shadow-sm"
-                    >
-                        Export to Excel
-                    </button>
+                        {/* Right Side: Search & Actions */}
+                        <div className="flex flex-wrap items-center gap-3">
+                            {/* Optional Search - High UX value for 44 subjects */}
+
+
+                            {/* Action Buttons Group */}
+                            <div className="flex items-center gap-2 bg-white p-1.5 rounded-[1.25rem] border border-slate-200 shadow-sm">
+                                <button
+                                    onClick={fetchMasterSheet}
+                                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-slate-700 hover:bg-slate-50 font-bold text-sm transition-all border border-transparent hover:border-slate-100"
+                                >
+                                    <FileSpreadsheet size={18} className="text-emerald-600" />
+                                    View Grades
+                                </button>
+
+                                <div className="w-px h-6 bg-slate-200 mx-1" /> {/* Vertical Divider */}
+
+                                <button
+                                    onClick={handleExportClick}
+                                    className="flex items-center gap-2 bg-slate-900 hover:bg-black text-white px-5 py-2 rounded-xl font-bold text-sm transition-all shadow-lg shadow-slate-200 active:scale-95"
+                                >
+                                    <Download size={18} />
+                                    Export Excel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </header>
 
                 <ModuleCatalog modules={modules} />
