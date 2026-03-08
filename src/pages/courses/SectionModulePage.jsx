@@ -6,7 +6,7 @@ import api from '../../api/axios';
 import MasterGradesModal from './MasterGradesModal';
 import * as XLSX from 'xlsx';
 
-const SectionModulePage = ({ sectionId }) => {
+const SectionModulePage = ({ sectionId, courseName, activeSectionName }) => {
     const navigate = useNavigate();
     const [modules, setModules] = useState([]);
     const [moduleStats, setModuleStats] = useState({ totalModules: 0, totalHours: 0, categoryCount: 0 });
@@ -143,10 +143,23 @@ const SectionModulePage = ({ sectionId }) => {
                 return row;
             });
 
+            // 1. Ensure we have strings even if props are missing
+            const safeCourseName = (courseName || 'Course').toString();
+            const safeSectionName = (activeSectionName || 'Section').toString();
+
+            // 2. Format the Date
+            const dateToday = new Date().toISOString().split('T')[0];
+
+            // 3. Use the safe variables for the replacement
+            const cleanCourse = safeCourseName.replace(/[^a-z0-9]/gi, '_');
+            const cleanSection = safeSectionName.replace(/[^a-z0-9]/gi, '_');
+
+            const fileName = `${cleanCourse}_${cleanSection}_${dateToday}.xlsx`;
+
             const worksheet = XLSX.utils.json_to_sheet(rows);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Grades");
-            XLSX.writeFile(workbook, `Section_${sectionId}_Master_Grades.xlsx`);
+            XLSX.writeFile(workbook, fileName);
 
         } catch (err) {
             console.error("Export Error:", err);
@@ -154,7 +167,7 @@ const SectionModulePage = ({ sectionId }) => {
             setLoading(false);
         }
     };
-    
+
     return (
         <div className="min-h-screen bg-slate-50">
             <div className="max-w-7xl mx-auto p-6">

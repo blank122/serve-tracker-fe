@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { useSections } from '../../hooks/useSections'; // Path to hook above
 import { ChevronRight, Search, Plus, Users, Layers, MoreVertical, Calendar, Loader2, ArrowUpRight, ArrowLeft } from 'lucide-react';
 import RosterModal from './RosterModal';
 import SectionModulePage from './SectionModulePage';
+
 const CourseContent = () => {
     const { courseId } = useParams();
     const { sections, stats, loading } = useSections(courseId);
     const [searchTerm, setSearchTerm] = useState('');
     const [isRosterOpen, setIsRosterOpen] = useState(false);
     const [selectedSection, setSelectedSection] = useState(null);
+    const location = useLocation(); // 2. Initialize location
+    const passedCourseName = location.state?.courseName || `Course_${courseId}`;
 
     const handleManageRoster = (section) => {
         console.log("📋 handleManageRoster called with section:", section);
@@ -28,9 +31,11 @@ const CourseContent = () => {
     // NEW: State to track which view to show
     const [view, setView] = useState('list'); // 'list' or 'modules'
     const [activeSectionId, setActiveSectionId] = useState(null);
+    const [activeSectionName, setActiveSectionName] = useState(null);
 
-    const handleViewModules = (id) => {
+    const handleViewModules = (id, sectionName) => {
         setActiveSectionId(id);
+        setActiveSectionName(sectionName);
         setView('modules');
     };
 
@@ -49,7 +54,11 @@ const CourseContent = () => {
                 >
                     <ArrowLeft size={16} /> Back to Sections
                 </button>
-                <SectionModulePage sectionId={activeSectionId} />
+                <SectionModulePage
+                    sectionId={activeSectionId}
+                    courseName={passedCourseName}
+                    sectionName={activeSectionName}
+                />
             </div>
         );
     }
@@ -110,7 +119,7 @@ const CourseContent = () => {
                                     name={section.section_name}
                                     studentCount={section.total_students || 0}
                                     onManage={() => handleManageRoster(section)}
-                                    onViewModules={() => handleViewModules(section.id)}
+                                    onViewModules={() => handleViewModules(section.id, section.section_name)}
                                 />
                             ))
                         ) : (
@@ -142,7 +151,7 @@ const StatChip = ({ label, count, color, icon }) => (
 );
 
 const SectionCard = ({ id, name, studentCount, onManage, onViewModules }) => {
-    
+
     return (
         <div className="bg-white border border-slate-100 p-6 rounded-[2rem] shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
             {/* --- THE NAVIGATION TRIGGER (Top Right) --- */}

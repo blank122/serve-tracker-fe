@@ -140,6 +140,7 @@ const CourseCard = ({ course }) => (
             <div className="flex gap-2">
                 <Link
                     to={`/admin/course-content/${course.id}`} // Using template literals to pass the ID
+                    state={{ courseName: course.name }} // <-- Attach the name here
                     onClick={(e) => e.stopPropagation()}
                     className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors"
                 >
