@@ -5,6 +5,7 @@ import ModuleCatalog from './ModuleCatalog';
 import api from '../../api/axios';
 import MasterGradesModal from './MasterGradesModal';
 import * as XLSX from 'xlsx';
+import SectionAnalytics from '../../components/SectionAnalytics';
 
 const SectionModulePage = ({ sectionId, courseName, activeSectionName }) => {
     const navigate = useNavigate();
@@ -12,11 +13,13 @@ const SectionModulePage = ({ sectionId, courseName, activeSectionName }) => {
     const [moduleStats, setModuleStats] = useState({ totalModules: 0, totalHours: 0, categoryCount: 0 });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [dashboardStats, setDashboardStats] = useState([]);
 
     // --- Master Sheet States ---
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [masterData, setMasterData] = useState(null);
     const [masterLoading, setMasterLoading] = useState(false);
+    const [dashboardStatsLoading, setDashboardStatsLoading] = useState(false);
 
     const fetchModules = async () => {
         if (!sectionId) return;
@@ -51,8 +54,21 @@ const SectionModulePage = ({ sectionId, courseName, activeSectionName }) => {
         }
     };
 
+    const fetchDashboardStats = async () => {
+        try {
+            setDashboardStatsLoading(true);
+            const response = await api.get(`/sections/${sectionId}/dashboard`);
+            setDashboardStats(response.data);
+        } catch (err) {
+            console.error("Error fetching dashboard", err);
+        } finally {
+            setDashboardStatsLoading(false);
+        }
+    };
+
     useEffect(() => {
         fetchModules();
+        fetchDashboardStats();
     }, [sectionId]);
 
     const calculateStudentMetrics = (student, data) => {
@@ -210,6 +226,8 @@ const SectionModulePage = ({ sectionId, courseName, activeSectionName }) => {
                         </div>
                     </div>
                 </header>
+
+                {dashboardStats && <SectionAnalytics data={dashboardStats} />}
 
                 <ModuleCatalog modules={modules} />
 
