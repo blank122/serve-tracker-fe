@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAdminStats } from '../../hooks/useAdminStats';
-import { Users, UserCheck, AlertTriangle, Trophy } from 'lucide-react';
+import { Users, UserCheck, AlertTriangle, Trophy, Zap } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import DashboardSkeleton from '../../components/DashboardSkeleton';
 import StatCard from '../../components/StatCard';
@@ -25,11 +25,34 @@ const AdminDashboard = () => {
       </header>
 
       {/* Stat Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <StatCard title="Students" value={stats?.total_students} icon={<Users />} />
-        <StatCard title="Instructors" value={stats?.total_instructors} icon={<UserCheck />} />
-        <StatCard title="Pending" value={stats?.pending_approvals} icon={<AlertTriangle />} highlight={stats?.pending_approvals > 0} />
-        <StatCard title="ML Risk" value={stats?.at_risk_count} icon={<AlertTriangle />} />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        <StatCard
+          icon={Users}
+          label="Total Students"
+          value={stats?.total_students ?? 0}
+          colorClass="bg-blue-50 text-blue-600"
+        />
+        <StatCard
+          icon={UserCheck}
+          label="Active Instructors"
+          value={stats?.total_instructors ?? 0}
+          colorClass="bg-indigo-50 text-indigo-600"
+        />
+        <StatCard
+          icon={AlertTriangle}
+          label="Pending Approvals"
+          value={stats?.pending_approvals ?? 0}
+          // Conditional styling: turns rose if there's work to do
+          colorClass={stats?.pending_approvals > 0 ? "bg-rose-50 text-rose-600" : "bg-slate-50 text-slate-400"}
+          subValue={stats?.pending_approvals > 0 ? "Requires Action" : "All Clear"}
+        />
+        <StatCard
+          icon={Zap}
+          label="ML Risk Alert"
+          value={stats?.at_risk_count ?? 0}
+          colorClass="bg-amber-50 text-amber-600"
+          subValue="Predictive Insight"
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -49,7 +72,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* PERFORMANCE RANKINGS */}
-        
+
       </div>
     </div>
   );
