@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { useCourses } from '../../hooks/useCourses';
-import { Plus, Search, Download, Edit2, CheckCircle, ArrowUpRight } from 'lucide-react';
+import { Plus, Search, Download, Edit2, CheckCircle, ArrowUpRight, X, ChevronDown } from 'lucide-react';
 import { Link } from "react-router-dom";
+import AddCourseModal from './AddCourse';
 
 const CoursePage = () => {
     const { courses, stats, loading } = useCourses();
     const [searchTerm, setSearchTerm] = useState('');
     // 1. Add state for the active tab
     const [currentTab, setCurrentTab] = useState('starting');
+    // 1. ADD MODAL STATE
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const filteredCourses = courses.filter(c =>
         c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -29,7 +32,11 @@ const CoursePage = () => {
                     <h1 className="text-2xl font-bold text-slate-800">Courses</h1>
                     <p className="text-slate-500 text-sm">Manage programs, sections, and progression in one place.</p>
                 </div>
-                <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-blue-200">
+                {/* 2. TRIGGER MODAL */}
+                <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-blue-200 active:scale-95"
+                >
                     <Plus size={18} />
                     <span className="font-semibold">Add Course</span>
                 </button>
@@ -96,6 +103,11 @@ const CoursePage = () => {
                     </div>
                 )}
             </section>
+            {/* 3. ADD THE MODAL COMPONENT */}
+            <AddCourseModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+            />
         </div>
     );
 };
