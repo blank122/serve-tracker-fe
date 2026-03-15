@@ -1,11 +1,12 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { BookOpen, RefreshCw, ArrowLeft, Table as TableIcon, X, Download, FileSpreadsheet, GraduationCap, Clock } from 'lucide-react';
+import { BookOpen, RefreshCw, ArrowLeft, Table as TableIcon, X, Download, FileSpreadsheet, Zap, Clock } from 'lucide-react';
 import ModuleCatalog from './ModuleCatalog';
 import api from '../../api/axios';
 import MasterGradesModal from './MasterGradesModal';
 import * as XLSX from 'xlsx';
 import SectionAnalytics from '../../components/SectionAnalytics';
+import PredictionModal from './PredictionModal';
 
 const SectionModulePage = ({ sectionId, courseName, activeSectionName }) => {
     const navigate = useNavigate();
@@ -20,7 +21,7 @@ const SectionModulePage = ({ sectionId, courseName, activeSectionName }) => {
     const [masterData, setMasterData] = useState(null);
     const [masterLoading, setMasterLoading] = useState(false);
     const [dashboardStatsLoading, setDashboardStatsLoading] = useState(false);
-
+    const [isPredictionModalOpen, setIsPredictionModalOpen] = useState(false);
     const fetchModules = async () => {
         if (!sectionId) return;
         try {
@@ -213,6 +214,14 @@ const SectionModulePage = ({ sectionId, courseName, activeSectionName }) => {
                                     View Grades
                                 </button>
 
+                                {/* New Prediction Button */}
+                                <button
+                                    onClick={() => setIsPredictionModalOpen(true)}
+                                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-slate-700 hover:bg-slate-50 font-bold text-sm transition-all border border-transparent hover:border-slate-100"
+                                >
+                                    <Zap size={18} className="text-amber-500" />
+                                    ML Predict
+                                </button>
                                 <div className="w-px h-6 bg-slate-200 mx-1" /> {/* Vertical Divider */}
 
                                 <button
@@ -239,6 +248,13 @@ const SectionModulePage = ({ sectionId, courseName, activeSectionName }) => {
                         onClose={() => setIsModalOpen(false)}
                     />
                 )}
+
+                {/* 3. ADD THE MODAL COMPONENT AT THE BOTTOM */}
+                <PredictionModal
+                    isOpen={isPredictionModalOpen}
+                    onClose={() => setIsPredictionModalOpen(false)}
+                    sectionID={sectionId}
+                />
             </div>
         </div>
     );
