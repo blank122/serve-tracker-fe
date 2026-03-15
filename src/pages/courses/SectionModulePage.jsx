@@ -229,7 +229,7 @@ const SectionModulePage = ({ sectionId, courseName, activeSectionName }) => {
 
                 {dashboardStats && <SectionAnalytics data={dashboardStats} />}
 
-                <ModuleCatalog modules={modules} />
+                <ModuleCatalog modules={modules} sectionID={sectionId} />
 
                 {/* Master Grades Modal */}
                 {isModalOpen && (

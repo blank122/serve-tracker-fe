@@ -1,15 +1,14 @@
-import React, { useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     BookOpen,
     Clock,
-    User,
     ChevronRight,
-    LayoutGrid,
-    CheckCircle2,
-    GraduationCap
 } from 'lucide-react';
+import GradingModal from './GradingModal';
 
-const ModuleCatalog = ({ modules }) => {
+const ModuleCatalog = ({ modules, sectionID }) => {
+
+    const [selectedModule, setSelectedModule] = useState(null);
     // Group modules by their module_type.module_name
     const groupedModules = useMemo(() => {
         return modules.reduce((acc, curr) => {
@@ -83,7 +82,9 @@ const ModuleCatalog = ({ modules }) => {
                                             <p className="text-sm font-bold text-slate-700">{item.instructor_name}</p>
                                         </div>
                                     </div>
-                                    <button className="h-10 w-10 flex items-center justify-center bg-slate-50 rounded-xl text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
+                                    <button 
+                                    onClick={() => setSelectedModule(item)} // This triggers the modal
+                                    className="h-10 w-10 flex items-center justify-center bg-slate-50 rounded-xl text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
                                         <ChevronRight size={18} />
                                     </button>
                                 </div>
@@ -92,6 +93,13 @@ const ModuleCatalog = ({ modules }) => {
                     </div>
                 </section>
             ))}
+
+            <GradingModal
+                isOpen={!!selectedModule}
+                onClose={() => setSelectedModule(null)}
+                module={selectedModule}
+                sectionID={sectionID}
+            />
         </div>
     );
 };
