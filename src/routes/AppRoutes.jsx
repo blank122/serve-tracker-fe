@@ -16,6 +16,7 @@ import CoursePage from '../pages/courses/CoursePage';
 import CourseContent from '../pages/courses/CourseContent';
 import SectionModulePage from '../pages/courses/SectionModulePage';
 import RegisterPage from '../pages/authentication/RegisterPage';
+import AdminUsersPage from '../pages/admin/AdminUserPage';
 
 const ProtectedRoute = ({ allowedRoles }) => {
     const { user } = useAuth();
@@ -60,6 +61,8 @@ const AppRoutes = () => {
                             <Route path="courses" element={<CoursePage />} />
                             <Route path="course-content/:courseId" element={<CourseContent />} />
                             <Route path="section/:sectionId/modules" element={<SectionModulePage />} />
+                            <Route path="users" element={<AdminUsersPage />} />
+
 
                         </Route>
                     </Route>
