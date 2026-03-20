@@ -27,6 +27,8 @@ const AdminLayout = () => {
     { name: 'Settings', path: '/settings', roles: ['admin', 'instructor', 'registrar'], icon: 'settings' },
     { name: 'Courses', path: '/admin/courses', roles: ['admin'], icon: 'book' },
     { name: 'User Management', path: '/admin/users', roles: ['admin'], icon: 'users' },
+    { name: 'Subjects', path: '/admin/subjects', roles: ['admin'], icon: 'book' },
+
 
   ];
 
