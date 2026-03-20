@@ -1,492 +1,301 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 const API_BASE_URL = 'http://localhost:8000';
 
 const ModuleCatalogPage = () => {
+    // --- State Management ---
     const [modules, setModules] = useState([]);
     const [moduleTypes, setModuleTypes] = useState([]);
-
     const [loading, setLoading] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [editingModule, setEditingModule] = useState(null);
+    const [viewMode, setViewMode] = useState('grid');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [status, setStatus] = useState({ error: '', success: '' });
     const [formData, setFormData] = useState({
         module_catalog_name: '',
         hours: '',
         module_type_id: ''
     });
-    const [searchTerm, setSearchTerm] = useState('');
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
-    const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
 
-    useEffect(() => {
-        fetchModules();
+    // --- Notifications Helper ---
+    const notify = (type, msg) => {
+        setStatus({ ...status, [type]: msg });
+        setTimeout(() => setStatus({ error: '', success: '' }), 4000);
+    };
+
+    // --- API Logic ---
+    const fetchData = useCallback(async () => {
+        setLoading(true);
+        try {
+            const [modRes, typeRes] = await Promise.all([
+                fetch(`${API_BASE_URL}/subject/module-catalog`),
+                fetch(`${API_BASE_URL}/subject/module-type`)
+            ]);
+            const mods = await modRes.json();
+            const types = await typeRes.json();
+            setModules(Array.isArray(mods) ? mods : []);
+            setModuleTypes(Array.isArray(types) ? types : []);
+        } catch (err) {
+            notify('error', 'Failed to sync with server.');
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
-    const fetchModules = async () => {
+    useEffect(() => { fetchData(); }, [fetchData]);
+
+    const handleSearch = async () => {
+        if (!searchTerm.trim()) return fetchData();
         setLoading(true);
         try {
-            const response = await fetch(`${API_BASE_URL}/subject/module-catalog`);
-            const data = await response.json();
+            const res = await fetch(`${API_BASE_URL}/subject/search/?name=${searchTerm}`);
+            const data = await res.json();
             setModules(data);
-        } catch (error) {
-            setError('Error fetching modules: ' + error.message);
-            setTimeout(() => setError(''), 5000);
+        } catch (err) {
+            notify('error', 'Search failed.');
         } finally {
             setLoading(false);
         }
-    };
-
-    useEffect(() => {
-        fetchModuleTypes();
-    }, []);
-
-    const fetchModuleTypes = async () => {
-        setLoading(true);
-        try {
-            const response = await fetch(`${API_BASE_URL}/subject/module-type`);
-            const data = await response.json();
-            setModuleTypes(data);
-        } catch (error) {
-            setError('Error fetching module types: ' + error.message);
-            setTimeout(() => setError(''), 5000);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const searchModules = async () => {
-        if (!searchTerm.trim()) {
-            fetchModules();
-            return;
-        }
-
-        setLoading(true);
-        try {
-            const response = await fetch(`${API_BASE_URL}/subject/search/?name=${searchTerm}`);
-            const data = await response.json();
-            setModules(data);
-        } catch (error) {
-            setError('Error searching modules: ' + error.message);
-            setTimeout(() => setError(''), 5000);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleInputChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        });
-    };
-
-    const openCreateModal = () => {
-        setEditingModule(null);
-        setFormData({
-            module_catalog_name: '',
-            hours: '',
-            module_type_id: ''
-        });
-        setShowModal(true);
-    };
-
-    const openEditModal = (module) => {
-        setEditingModule(module);
-        setFormData({
-            module_catalog_name: module.module_catalog_name,
-            hours: module.hours,
-            module_type_id: module.module_type_id
-        });
-        setShowModal(true);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        if (!formData.module_catalog_name.trim()) {
-            setError('Module name is required');
-            setTimeout(() => setError(''), 3000);
-            return;
-        }
-        if (!formData.hours || formData.hours <= 0) {
-            setError('Hours must be a positive number');
-            setTimeout(() => setError(''), 3000);
-            return;
-        }
-        if (!formData.module_type_id || formData.module_type_id <= 0) {
-            setError('Module type ID must be a positive number');
-            setTimeout(() => setError(''), 3000);
-            return;
-        }
-
         setLoading(true);
         try {
-            const url = editingModule
+            const isEdit = !!editingModule;
+            const url = isEdit 
                 ? `${API_BASE_URL}/subject/module-catalog/${editingModule.id}`
                 : `${API_BASE_URL}/subject/module-catalog/`;
-
-            const method = editingModule ? 'PUT' : 'POST';
-
-            const response = await fetch(url, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+            
+            const res = await fetch(url, {
+                method: isEdit ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    module_catalog_name: formData.module_catalog_name,
+                    ...formData,
                     hours: parseInt(formData.hours),
                     module_type_id: parseInt(formData.module_type_id)
                 })
             });
 
-            if (response.ok) {
-                setSuccess(editingModule ? 'Module updated successfully!' : 'Module created successfully!');
+            if (res.ok) {
+                notify('success', `Module ${isEdit ? 'updated' : 'created'}!`);
                 setShowModal(false);
-                fetchModules();
-                setTimeout(() => setSuccess(''), 3000);
+                fetchData();
             } else {
-                const errorData = await response.json();
-                setError('Error: ' + errorData.detail);
-                setTimeout(() => setError(''), 5000);
+                const err = await res.json();
+                notify('error', err.detail || 'Action failed');
             }
-        } catch (error) {
-            setError('Error: ' + error.message);
-            setTimeout(() => setError(''), 5000);
+        } catch (err) {
+            notify('error', 'Server error occurred.');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleDelete = async (module) => {
-        if (window.confirm(`Are you sure you want to delete "${module.module_catalog_name}"?`)) {
-            setLoading(true);
-            try {
-                const response = await fetch(`${API_BASE_URL}/subject/module-catalog/${module.id}`, {
-                    method: 'DELETE'
-                });
-
-                if (response.ok) {
-                    setSuccess('Module deleted successfully!');
-                    fetchModules();
-                    setTimeout(() => setSuccess(''), 3000);
-                } else {
-                    const errorData = await response.json();
-                    setError('Error: ' + errorData.detail);
-                    setTimeout(() => setError(''), 5000);
-                }
-            } catch (error) {
-                setError('Error: ' + error.message);
-                setTimeout(() => setError(''), 5000);
-            } finally {
-                setLoading(false);
+    const confirmDelete = async (module) => {
+        if (!window.confirm(`Delete "${module.module_catalog_name}"?`)) return;
+        setLoading(true);
+        try {
+            const res = await fetch(`${API_BASE_URL}/subject/module-catalog/${module.id}`, { method: 'DELETE' });
+            if (res.ok) {
+                notify('success', 'Deleted successfully');
+                fetchData();
             }
+        } catch (err) {
+            notify('error', 'Delete failed');
+        } finally {
+            setLoading(false);
         }
     };
 
-    // Grid View Component
-    const GridView = () => (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {modules.map((module) => (
-                <div
-                    key={module.id}
-                    className="bg-white rounded-xl shadow-lg overflow-hidden card-hover animate-fade-in"
-                >
-                    <div className="p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-2 rounded-lg">
-                                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                                </svg>
-                            </div>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => openEditModal(module)}
-                                    className="text-blue-600 hover:text-blue-800 transition-colors p-1"
-                                    title="Edit"
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                    </svg>
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(module)}
-                                    className="text-red-600 hover:text-red-800 transition-colors p-1"
-                                    title="Delete"
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
+    // --- UI Helpers ---
+    const getTypeName = (id) => {
+        const type = moduleTypes.find(t => t.id === parseInt(id));
+        return type ? (type.module_name || type.name) : `Type ${id}`;
+    };
 
-                        <h3 className="text-xl font-bold text-gray-800 mb-3 line-clamp-1">
-                            {module.module_catalog_name}
-                        </h3>
-
-                        <div className="space-y-2 mb-4">
-                            <div className="flex items-center text-gray-600">
-                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <span className="text-sm">Duration: <strong>{module.hours} hours</strong></span>
-                            </div>
-                            <div className="flex items-center text-gray-600">
-                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l5 5a2 2 0 01.586 1.414V19a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z" />
-                                </svg>
-                                <span className="text-sm">Type ID: <strong>{module.module_type_id}</strong></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            ))}
-        </div>
-    );
-
-    // List View Component
-    const ListView = () => (
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                    <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Module Name</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hours</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type ID</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                    {modules.map((module) => (
-                        <tr key={module.id} className="hover:bg-gray-50 transition-colors">
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{module.id}</td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center">
-                                    <div className="flex-shrink-0 h-10 w-10">
-                                        <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg p-2">
-                                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <div className="ml-4">
-                                        <div className="text-sm font-medium text-gray-900">{module.module_catalog_name}</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                    {module.hours} hours
-                                </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Type {module.module_type_id}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <button
-                                    onClick={() => openEditModal(module)}
-                                    className="text-blue-600 hover:text-blue-900 mr-3"
-                                >
-                                    Edit
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(module)}
-                                    className="text-red-600 hover:text-red-900"
-                                >
-                                    Delete
-                                </button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+    const ActionButtons = ({ item }) => (
+        <div className="flex gap-2">
+            <button 
+                onClick={() => {
+                    setEditingModule(item);
+                    setFormData({
+                        module_catalog_name: item.module_catalog_name,
+                        hours: item.hours,
+                        module_type_id: item.module_type_id
+                    });
+                    setShowModal(true);
+                }}
+                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+            >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+            </button>
+            <button 
+                onClick={() => confirmDelete(item)}
+                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            </button>
         </div>
     );
 
     return (
-        <div className="min-h-screen py-8 px-4">
-            <div className="max-w-7xl mx-auto">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
-                    <h1 className="text-2xl font-bold text-slate-800">Subjects Management</h1>
+        <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8 font-sans text-slate-900">
+            <div className="max-w-6xl mx-auto">
+                
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                    <div>
+                        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Module Catalog</h1>
+                        <p className="text-slate-500 mt-1">Manage curriculum modules and credit hours.</p>
+                    </div>
                     <button
-                        onClick={openCreateModal}
-                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2"
+                        onClick={() => {
+                            setEditingModule(null);
+                            setFormData({ module_catalog_name: '', hours: '', module_type_id: '' });
+                            setShowModal(true);
+                        }}
+                        className="inline-flex items-center justify-center px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-blue-200 shadow-lg transition-all transform hover:-translate-y-0.5"
                     >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Add Module
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+                        New Module
                     </button>
                 </div>
 
-                {/* Search and Controls */}
-                <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-                    <div className="flex flex-col md:flex-row gap-4">
-                        <div className="flex-1">
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    placeholder="Search modules by name..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    onKeyPress={(e) => e.key === 'Enter' && searchModules()}
-                                    className="input-field pl-10"
-                                />
-                                <svg className="absolute left-3 top-3 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                            </div>
-                        </div>
-                        <button onClick={searchModules} className="btn-secondary">
-                            Search
-                        </button>
-                        <button onClick={fetchModules} className="btn-secondary">
-                            Refresh
-                        </button>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => setViewMode('grid')}
-                                className={`px-3 py-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-                                title="Grid View"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                                </svg>
-                            </button>
-                            <button
-                                onClick={() => setViewMode('list')}
-                                className={`px-3 py-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-                                title="List View"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-                                </svg>
-                            </button>
-                        </div>
+                {/* Toolbar */}
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-wrap gap-4 items-center">
+                    <div className="relative flex-1 min-w-[280px]">
+                        <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                        </span>
+                        <input
+                            type="text"
+                            placeholder="Search by module name..."
+                            className="block w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                        />
+                    </div>
+                    <div className="flex bg-slate-100 p-1 rounded-xl">
+                        <button 
+                            onClick={() => setViewMode('grid')}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                        >Grid</button>
+                        <button 
+                            onClick={() => setViewMode('list')}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                        >List</button>
                     </div>
                 </div>
 
                 {/* Alerts */}
-                {error && (
-                    <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg animate-fade-in">
-                        {error}
-                    </div>
-                )}
-                {success && (
-                    <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg animate-fade-in">
-                        {success}
-                    </div>
-                )}
+                {status.error && <div className="mb-4 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-xl animate-fade-in">{status.error}</div>}
+                {status.success && <div className="mb-4 p-4 bg-emerald-50 border-l-4 border-emerald-500 text-emerald-700 rounded-r-xl animate-fade-in">{status.success}</div>}
 
-                {/* Loading State */}
-                {loading && (
-                    <div className="text-center py-12">
-                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-                        <p className="mt-4 text-white text-lg">Loading...</p>
+                {/* Main Content Area */}
+                {loading && !showModal ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+                        <p className="font-medium">Fetching modules...</p>
                     </div>
-                )}
-
-                {/* Content */}
-                {!loading && modules.length === 0 ? (
-                    <div className="bg-white rounded-xl shadow-lg p-12 text-center animate-fade-in">
-                        <svg className="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">No modules found</h3>
-                        <p className="text-gray-600">Click "Add Module" to create your first module catalog entry</p>
+                ) : modules.length === 0 ? (
+                    <div className="bg-white rounded-3xl p-16 text-center border-2 border-dashed border-slate-200">
+                        <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg className="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-800">Empty Catalog</h3>
+                        <p className="text-slate-500">No modules match your criteria.</p>
+                    </div>
+                ) : viewMode === 'grid' ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
+                        {modules.map(item => (
+                            <div key={item.id} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md hover:border-blue-100 transition-all group">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="bg-blue-50 text-blue-600 p-3 rounded-xl font-bold">#{item.id}</div>
+                                    <ActionButtons item={item} />
+                                </div>
+                                <h3 className="text-lg font-bold text-slate-800 mb-2 truncate group-hover:text-blue-600 transition-colors">{item.module_catalog_name}</h3>
+                                <div className="flex items-center gap-4 text-sm text-slate-500">
+                                    <span className="flex items-center"><svg className="w-4 h-4 mr-1 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>{item.hours} hrs</span>
+                                    <span className="px-2 py-0.5 bg-slate-100 rounded text-xs font-semibold">{getTypeName(item.module_type_id)}</span>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 ) : (
-                    <div className="animate-fade-in">
-                        {viewMode === 'grid' ? <GridView /> : <ListView />}
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden animate-fade-in">
+                        <table className="w-full text-left">
+                            <thead className="bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Module</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Hours</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Category</th>
+                                    <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {modules.map(item => (
+                                    <tr key={item.id} className="hover:bg-blue-50/30 transition-colors">
+                                        <td className="px-6 py-4 font-bold text-slate-800">{item.module_catalog_name}</td>
+                                        <td className="px-6 py-4 text-slate-600">{item.hours}h</td>
+                                        <td className="px-6 py-4"><span className="px-2 py-1 bg-slate-100 rounded-md text-xs font-medium">{getTypeName(item.module_type_id)}</span></td>
+                                        <td className="px-6 py-4 flex justify-end"><ActionButtons item={item} /></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 )}
 
-                {/* Modal */}
+                {/* Modal Container */}
                 {showModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                        {/* Backdrop */}
-                        <div
-                            className="fixed inset-0 bg-black/40 backdrop-blur-sm animate-fade-in"
-                            onClick={() => setShowModal(false)}
-                        ></div>
-
-                        {/* Modal Card */}
-                        <div
-                            className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-up z-10"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <div className="p-6">
-                                <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                                    {editingModule ? 'Edit Module' : 'Create New Module'}
-                                </h2>
-
-                                <form onSubmit={handleSubmit}>
-                                    {/* Module Name Input */}
-                                    <div className="mb-4">
-                                        <label className="block text-gray-700 font-medium mb-2">Module Name *</label>
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
+                        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowModal(false)} />
+                        
+                        <div className="relative bg-white w-full max-w-md rounded-3xl shadow-2xl z-10 animate-slide-up">
+                            <div className="p-8">
+                                <h2 className="text-2xl font-black text-slate-900 mb-6">{editingModule ? 'Update Module' : 'Add New Module'}</h2>
+                                <form onSubmit={handleSubmit} className="space-y-5">
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-1.5">Module Name</label>
                                         <input
-                                            type="text"
-                                            name="module_catalog_name"
+                                            required
+                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                                             value={formData.module_catalog_name}
-                                            onChange={handleInputChange}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                            required
+                                            onChange={e => setFormData({...formData, module_catalog_name: e.target.value})}
                                         />
                                     </div>
-
-                                    {/* Hours Input */}
-                                    <div className="mb-4">
-                                        <label className="block text-gray-700 font-medium mb-2">Hours *</label>
-                                        <input
-                                            type="number"
-                                            name="hours"
-                                            value={formData.hours}
-                                            onChange={handleInputChange}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                            min="1"
-                                            required
-                                        />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-bold text-slate-700 mb-1.5">Hours</label>
+                                            <input
+                                                type="number"
+                                                required
+                                                min="1"
+                                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                                                value={formData.hours}
+                                                onChange={e => setFormData({...formData, hours: e.target.value})}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-bold text-slate-700 mb-1.5">Type</label>
+                                            <select
+                                                required
+                                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                                                value={formData.module_type_id}
+                                                onChange={e => setFormData({...formData, module_type_id: e.target.value})}
+                                            >
+                                                <option value="">Select...</option>
+                                                {moduleTypes.map(t => <option key={t.id} value={t.id}>{t.module_name || t.name}</option>)}
+                                            </select>
+                                        </div>
                                     </div>
-
-                                    {/* Dynamic Module Type Dropdown */}
-                                    <div className="mb-6">
-                                        <label className="block text-gray-700 font-medium mb-2">Module Type *</label>
-                                        <select
-                                            name="module_type_id"
-                                            value={formData.module_type_id}
-                                            onChange={handleInputChange}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white cursor-pointer"
-                                            required
-                                        >
-                                            <option value="">Select a Type</option>
-                                            {moduleTypes.map((type) => (
-                                                <option key={type.id} value={type.id}>
-                                                    {/* Adjust 'type.name' to match whatever property holds the name in your API response */}
-                                                    {type.module_name || type.name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        {moduleTypes.length === 0 && !loading && (
-                                            <p className="text-xs text-red-500 mt-1">No module types found.</p>
-                                        )}
-                                    </div>
-
-                                    {/* Action Buttons */}
-                                    <div className="flex gap-3">
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowModal(false)}
-                                            className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            disabled={loading}
-                                            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 font-medium"
-                                        >
-                                            {loading ? 'Processing...' : (editingModule ? 'Update' : 'Create')}
+                                    <div className="flex gap-3 pt-4">
+                                        <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-3 font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-all">Cancel</button>
+                                        <button type="submit" disabled={loading} className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-100 disabled:opacity-50 transition-all">
+                                            {loading ? 'Saving...' : (editingModule ? 'Save Changes' : 'Create Module')}
                                         </button>
                                     </div>
                                 </form>
