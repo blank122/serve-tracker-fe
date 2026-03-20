@@ -198,10 +198,13 @@ const LoginPage = () => {
                       </button>
 
                       <p className="text-center text-sm text-slate-600">
-                        No Account yet? <span className="font-semibold text-blue-600 hover:underline cursor-pointer">Register</span>
+                        No Account yet? <span
+                          onClick={() => navigate('/register')}
+                          className="font-semibold text-blue-600 hover:underline cursor-pointer"
+                        >Register</span>
                       </p>
                     </form>
-                    
+
                   </div>
                 </div>
               </aside>

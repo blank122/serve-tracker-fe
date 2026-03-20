@@ -15,6 +15,7 @@ import RegistrarLayout from '../layouts/RegistrarLayout';
 import CoursePage from '../pages/courses/CoursePage';
 import CourseContent from '../pages/courses/CourseContent';
 import SectionModulePage from '../pages/courses/SectionModulePage';
+import RegisterPage from '../pages/authentication/RegisterPage';
 
 const ProtectedRoute = ({ allowedRoles }) => {
     const { user } = useAuth();
@@ -50,6 +51,7 @@ const AppRoutes = () => {
                 <Routes>
                     <Route path="/" element={<LoginPage />} />
                     <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
 
                     {/* Admin Only */}
                     <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
