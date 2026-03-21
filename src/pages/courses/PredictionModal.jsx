@@ -87,8 +87,8 @@ const PredictionModal = ({ isOpen, onClose, sectionID }) => {
                                     key={s.student_id}
                                     onClick={() => handlePredict(s.student_id)}
                                     className={`w-full p-4 rounded-2xl text-left transition-all flex items-center justify-between group ${selectedPrediction?.student_id === s.student_id
-                                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
-                                            : 'hover:bg-white text-slate-600 border border-transparent hover:border-slate-200'
+                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
+                                        : 'hover:bg-white text-slate-600 border border-transparent hover:border-slate-200'
                                         }`}
                                 >
                                     <div>
@@ -114,45 +114,122 @@ const PredictionModal = ({ isOpen, onClose, sectionID }) => {
                                 <p className="font-black text-slate-400 uppercase tracking-widest text-xs">Crunching data points...</p>
                             </div>
                         ) : selectedPrediction ? (
-                            <div className="space-y-8 animate-in fade-in duration-500">
-                                {/* Replace your previous PredictionCard grid with this updated version */}
-                                <div className="grid grid-cols-3 gap-6">
+                            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+                                {/* TOP STATS: Core ML Metrics */}
+                                <div className="grid grid-cols-3 gap-4">
                                     <PredictionCard
                                         label="Current Standing"
-                                        value={`${selectedPrediction?.current_standing}%`}
+                                        value={`${selectedPrediction.current_standing}%`}
                                         icon={Target}
                                         color="blue"
                                     />
                                     <PredictionCard
                                         label="ML Risk Level"
-                                        // Mapping to the new risk_level field
-                                        value={selectedPrediction?.ml_prediction?.risk_level}
-                                        icon={Zap}
-                                        // Color logic based on the new risk_level string
+                                        value={selectedPrediction.ml_prediction?.risk_level}
+                                        icon={AlertCircle}
                                         color={
-                                            selectedPrediction?.ml_prediction?.risk_level === 'Low' ? 'emerald' :
-                                                selectedPrediction?.ml_prediction?.risk_level === 'Medium' ? 'amber' : 'rose'
+                                            selectedPrediction.ml_prediction?.risk_level === 'Low' ? 'emerald' :
+                                                selectedPrediction.ml_prediction?.risk_level === 'Medium' ? 'amber' : 'rose'
                                         }
                                     />
                                     <PredictionCard
-                                        label="Prob. of Failure"
-                                        // Mapping to the new failure_probability string
-                                        value={selectedPrediction?.ml_prediction?.failure_probability}
+                                        label="Trajectory"
+                                        value={selectedPrediction.predicted_trajectory?.trend || "Stable"}
                                         icon={TrendingUp}
                                         color="indigo"
                                     />
                                 </div>
 
-                                {/* New Section: Feature Breakdown (Using the features_used data) */}
-                                <div className="mt-8 bg-slate-50 border border-slate-100 p-6 rounded-[2rem]">
-                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">ML Input Features</h4>
-                                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                                        {selectedPrediction?.ml_prediction?.features_used && Object.entries(selectedPrediction.ml_prediction.features_used).map(([key, val]) => (
-                                            <div key={key} className="bg-white p-3 rounded-xl border border-slate-200/50">
-                                                <p className="text-[9px] font-bold text-slate-400 uppercase truncate">{key.replace('_', ' ')}</p>
-                                                <p className="text-sm font-black text-slate-700">{val}</p>
+                                <div className="grid grid-cols-2 gap-6">
+                                    {/* LEFT COLUMN: Warnings & Intervention */}
+                                    <div className="space-y-6">
+                                        {/* Early Warning Signs */}
+                                        <div className="bg-rose-50/50 border border-rose-100 p-6 rounded-[2rem]">
+                                            <h4 className="flex items-center gap-2 text-[10px] font-black text-rose-500 uppercase tracking-widest mb-4">
+                                                <AlertCircle size={14} /> Early Warning Signs
+                                            </h4>
+                                            <div className="space-y-2">
+                                                {selectedPrediction.early_warnings?.length > 0 ? (
+                                                    selectedPrediction.early_warnings.map((warning, i) => (
+                                                        <div key={i} className="flex items-start gap-2 text-[11px] font-bold text-rose-700 bg-white/50 p-2 rounded-xl border border-rose-100">
+                                                            <span className="mt-1.5 h-1 w-1 rounded-full bg-rose-500 shrink-0" />
+                                                            {warning}
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <p className="text-[10px] font-bold text-rose-300 italic">No red flags detected at this time.</p>
+                                                )}
                                             </div>
-                                        ))}
+                                        </div>
+
+                                        {/* Intervention Plan */}
+                                        <div className="bg-slate-900 text-white p-6 rounded-[2rem] shadow-xl min-h-[120px]">
+                                            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Recommended Intervention</h4>
+                                            <div className="space-y-3">
+                                                {selectedPrediction.intervention_plan?.immediate_actions?.length > 0 ? (
+                                                    selectedPrediction.intervention_plan.immediate_actions.map((action, i) => (
+                                                        <div key={i} className="flex items-center gap-2 text-xs font-bold text-white">
+                                                            <Zap size={14} className="text-amber-400 shrink-0" />
+                                                            {action}
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <p className="text-xs text-slate-500 italic">No immediate actions required.</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* RIGHT COLUMN: Context & Features */}
+                                    <div className="space-y-6">
+                                        {/* Section Context / Ranking */}
+                                        <div className="bg-white border border-slate-100 p-6 rounded-[2rem] shadow-sm">
+                                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Class Context</h4>
+                                            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl mb-3">
+                                                <div>
+                                                    <p className="text-[9px] font-bold text-slate-400 uppercase">Class Rank</p>
+                                                    <p className="text-xl font-black text-slate-800">#{selectedPrediction.section_context?.class_rank.rank} <span className="text-xs text-slate-400">of {selectedPrediction.section_context?.class_rank.out_of}</span></p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-[9px] font-bold text-slate-400 uppercase">Percentile</p>
+                                                    <p className="text-xl font-black text-blue-600">{selectedPrediction.section_context?.class_rank.percentile}%</p>
+                                                </div>
+                                            </div>
+                                            <div className="p-4 border border-slate-100 rounded-2xl">
+                                                <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">Performance vs. Average</p>
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`h-2 flex-1 rounded-full bg-slate-100 overflow-hidden`}>
+                                                        <div
+                                                            className="h-full bg-blue-500"
+                                                            style={{ width: `${(selectedPrediction.section_context?.vs_section_average.student_average / 100) * 100}%` }}
+                                                        />
+                                                    </div>
+                                                    <span className="text-xs font-black text-slate-600">{selectedPrediction.section_context?.vs_section_average.verdict}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* ML Feature Breakdown */}
+                                        <div className="bg-slate-50 border border-slate-100 p-6 rounded-[2rem]">
+                                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 italic">Feature Influence (ML Inputs)</h4>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                {Object.entries(selectedPrediction.ml_prediction?.features_used || {}).map(([key, val]) => (
+                                                    <div key={key} className="bg-white p-3 rounded-xl border border-slate-200/50 flex justify-between items-center">
+                                                        <span className="text-[9px] font-bold text-slate-500 uppercase">{key.split('_').join(' ')}</span>
+                                                        <span className="text-sm font-black text-slate-700">{val}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="mt-4 flex items-center justify-between">
+                                                <span className="px-2 py-1 rounded-lg text-[9px] font-black uppercase bg-emerald-100 text-emerald-600">
+                                                    Data: {selectedPrediction.data_completeness?.percentage}% Complete
+                                                </span>
+                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">
+                                                    Confidence: <span className="text-slate-600">{selectedPrediction.data_completeness?.confidence_level}</span>
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
