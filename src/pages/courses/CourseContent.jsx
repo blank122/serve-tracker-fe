@@ -4,15 +4,17 @@ import { useSections } from '../../hooks/useSections'; // Path to hook above
 import { ChevronRight, Search, Plus, Users, Layers, MoreVertical, Calendar, Loader2, ArrowUpRight, ArrowLeft } from 'lucide-react';
 import RosterModal from './RosterModal';
 import SectionModulePage from './SectionModulePage';
+import CreateSectionModal from './CreateSectionModal';
 
 const CourseContent = () => {
     const { courseId } = useParams();
-    const { sections, stats, loading } = useSections(courseId);
+    const { sections, stats, loading, refreshSections } = useSections(courseId);
     const [searchTerm, setSearchTerm] = useState('');
     const [isRosterOpen, setIsRosterOpen] = useState(false);
     const [selectedSection, setSelectedSection] = useState(null);
     const location = useLocation(); // 2. Initialize location
     const passedCourseName = location.state?.courseName || `Course_${courseId}`;
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     const handleManageRoster = (section) => {
         console.log("📋 handleManageRoster called with section:", section);
@@ -73,12 +75,17 @@ const CourseContent = () => {
             </nav>
 
             {/* --- 2. Header (Always Visible) --- */}
+            {/* --- Header --- */}
             <div className="flex justify-between items-start">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800">Sections Management</h1>
                     <p className="text-slate-500 text-sm">Reviewing active class groups and enrollment stats.</p>
                 </div>
-                <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-blue-200">
+                {/* 2. Link the button to the state */}
+                <button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-blue-200"
+                >
                     <Plus size={18} />
                     <span className="font-semibold">Create Section</span>
                 </button>
@@ -136,6 +143,17 @@ const CourseContent = () => {
                 isOpen={isRosterOpen}
                 onClose={() => setIsRosterOpen(false)}
                 section={selectedSection}
+            />
+
+            {/* 3. Add the Create Modal */}
+            <CreateSectionModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                courseId={courseId}
+                onSectionCreated={() => {
+                    // Trigger your hook's data fetcher to show the new section
+                    if (refreshSections) refreshSections();
+                }}
             />
         </div>
     );

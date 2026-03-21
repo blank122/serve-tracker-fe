@@ -1,23 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
-import api from '../api/axios'; // Adjust path to your axios.js file
+import api from '../api/axios'; 
 
 export const useSections = (courseId) => {
     const [sections, setSections] = useState([]);
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({ totalSections: 0, totalStudents: 0 });
 
-    const fetchSections = useCallback(async () => {
+    const fetchSections = useCallback(async (showLoading = true) => {
         if (!courseId) return;
 
         try {
-            setLoading(true);
-            // Using your interceptor and the specific endpoint
+            if (showLoading) setLoading(true);
+            
             const response = await api.get(`/sections/course/${courseId}`);
             const data = response.data || [];
 
             setSections(data);
 
-            // Calculate stats dynamically from the response
             setStats({
                 totalSections: data.length,
                 totalStudents: data.reduce((acc, curr) => acc + (curr.total_students || 0), 0)
@@ -33,5 +32,11 @@ export const useSections = (courseId) => {
         fetchSections();
     }, [fetchSections]);
 
-    return { sections, stats, loading, refreshSections: fetchSections };
+    // Return fetchSections as refreshSections
+    return { 
+        sections, 
+        stats, 
+        loading, 
+        refreshSections: fetchSections 
+    };
 };
