@@ -32,6 +32,35 @@ const AdminLayout = () => {
 
   ];
 
+  // Create a separate logout function
+  const handleLogout = async () => {
+    try {
+      // Call logout endpoint if you have one
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      // Clear local storage
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+
+      // Clear any other auth-related data
+      sessionStorage.clear();
+
+      // Redirect to login page
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Even if API call fails, clear local data and redirect
+      localStorage.clear();
+      window.location.href = '/login';
+    }
+  };
+
+
   // 2. Add a check to ensure user and user.role exist before filtering
   const filteredNav = user?.role
     ? navigation.filter(item => item.roles.includes(user.role.toLowerCase()))
@@ -78,7 +107,7 @@ const AdminLayout = () => {
         {/* Bottom Section / Logout */}
         <div className="p-4 border-t border-slate-800">
           <button
-            onClick={() => navigate('/login')}
+            onClick={handleLogout} // Changed from navigate('/login')
             className="flex items-center gap-3 px-3 py-2 w-full text-slate-400 hover:text-red-400 transition-colors group"
           >
             <div className="w-5 h-5 flex items-center justify-center">
