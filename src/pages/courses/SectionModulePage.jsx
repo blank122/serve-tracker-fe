@@ -7,6 +7,8 @@ import MasterGradesModal from './MasterGradesModal';
 import * as XLSX from 'xlsx';
 import SectionAnalytics from '../../components/SectionAnalytics';
 import PredictionModal from './PredictionModal';
+import { useSubjects } from '../../hooks/useSubjects';
+import AddSubjectModal from './AddSubjectModal';
 
 const SectionModulePage = ({ sectionId, courseName, activeSectionName }) => {
     const navigate = useNavigate();
@@ -15,6 +17,7 @@ const SectionModulePage = ({ sectionId, courseName, activeSectionName }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [dashboardStats, setDashboardStats] = useState([]);
+    const [isAddSubjectOpen, setIsAddSubjectOpen] = useState(false);
 
     // --- Master Sheet States ---
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -22,6 +25,9 @@ const SectionModulePage = ({ sectionId, courseName, activeSectionName }) => {
     const [masterLoading, setMasterLoading] = useState(false);
     const [dashboardStatsLoading, setDashboardStatsLoading] = useState(false);
     const [isPredictionModalOpen, setIsPredictionModalOpen] = useState(false);
+
+
+
     const fetchModules = async () => {
         if (!sectionId) return;
         try {
@@ -231,6 +237,14 @@ const SectionModulePage = ({ sectionId, courseName, activeSectionName }) => {
                                     <Download size={18} />
                                     Export Excel
                                 </button>
+
+                                <button
+                                    onClick={() => setIsAddSubjectOpen(true)}
+                                    className="flex items-center gap-2 bg-slate-900 hover:bg-black text-white px-5 py-2 rounded-xl font-bold text-sm transition-all shadow-lg shadow-slate-200 active:scale-95"
+                                >
+                                    <BookOpen size={18} />
+                                    Add Subject
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -254,6 +268,15 @@ const SectionModulePage = ({ sectionId, courseName, activeSectionName }) => {
                     isOpen={isPredictionModalOpen}
                     onClose={() => setIsPredictionModalOpen(false)}
                     sectionID={sectionId}
+                />
+
+                <AddSubjectModal
+                    isOpen={isAddSubjectOpen}
+                    onClose={() => setIsAddSubjectOpen(false)}
+                    sectionID={sectionId}
+                    // FIX: Pass the section name and the refresh function
+                    sectionName={activeSectionName}
+                    onSubjectAdded={fetchModules}
                 />
             </div>
         </div>
