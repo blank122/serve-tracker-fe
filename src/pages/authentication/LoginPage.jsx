@@ -33,7 +33,10 @@ const LoginPage = () => {
       if (access_token) {
         // 3. Optional: Block if not approved
         if (status !== 'approved') {
-          toast.error("Your account is pending approval.", { id: loadingToast });
+          toast.error("Your account is pending approval.", {
+            id: loadingToast,
+            autoClose: 5000 // 5 seconds
+          });
           return;
         }
 
@@ -41,7 +44,10 @@ const LoginPage = () => {
         // This saves to localStorage and sets the 'user' state internally
         await login(response.data, access_token);
 
-        toast.success(`Welcome back, ${role}!`, { id: loadingToast });
+        toast.success(`Welcome back, ${role}!`, {
+          id: loadingToast,
+          autoClose: 3000 // 3 seconds
+        });
 
         // 5. Direct Navigation based on role
         const targetRole = role.toLowerCase();
@@ -57,7 +63,12 @@ const LoginPage = () => {
       }
     } catch (error) {
       console.error("Login error:", error);
-      toast.error(error.response?.data?.message || "Invalid credentials", { id: loadingToast });
+      toast.error(error.response?.data?.message || "Invalid credentials", {
+        id: loadingToast,
+        autoClose: 10000, // 5 seconds - adjust as needed
+        draggable: true, // optional: allows user to drag to dismiss
+        closeOnClick: true // optional: allows clicking to dismiss
+      });
     }
   };
 
