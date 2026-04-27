@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Save, User, CheckCircle2 } from 'lucide-react';
 import api from '../../api/axios';
 
-const GradingModal = ({ isOpen, onClose, module, sectionID }) => {
+const GradingModal = ({ isOpen, onClose, moduleID, moduleName, sectionID }) => {
     const [roster, setRoster] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -12,7 +12,7 @@ const GradingModal = ({ isOpen, onClose, module, sectionID }) => {
         const fetchRoster = async () => {
             try {
                 setLoading(true);
-                const response = await api.get(`/sections/${sectionID}/modules-catalog/${module.id}/grading-roster`);
+                const response = await api.get(`/sections/${sectionID}/modules-catalog/${moduleID}/grading-roster`);
 
                 // Reverse weighting: Database (weighted) * 2 = Raw Score
                 const rawData = response.data.map(student => ({
@@ -29,10 +29,10 @@ const GradingModal = ({ isOpen, onClose, module, sectionID }) => {
             }
         };
 
-        if (isOpen && module?.id) {
+        if (isOpen && moduleID) {
             fetchRoster();
         }
-    }, [isOpen, module, sectionID]);
+    }, [isOpen, moduleID, sectionID]);
 
     // Inside handleInputChange
     const handleInputChange = (studentId, field, value) => {
@@ -48,7 +48,7 @@ const GradingModal = ({ isOpen, onClose, module, sectionID }) => {
             setIsSaving(true);
 
             const payload = {
-                module_id: module.id,
+                module_id: moduleID,
                 roster: roster.map(s => ({
                     student_id: s.student_id,
                     // Ensure these are absolute Numbers, not strings from the input
@@ -60,7 +60,7 @@ const GradingModal = ({ isOpen, onClose, module, sectionID }) => {
             const response = await api.post('sections/grades/upsert-bulk', payload);
 
             // Success path
-            alert("✅ Grades saved successfully!");
+            alert("Grades saved successfully!");
             onClose(); // Close the modal
 
         } catch (err) {
@@ -71,7 +71,7 @@ const GradingModal = ({ isOpen, onClose, module, sectionID }) => {
                 : errorDetail || "Check your network connection.";
 
             console.error("Save failed:", err.response?.data);
-            alert(`❌ Error Saving Grades:\n${errorMessage}`);
+            alert(` Error Saving Grades:\n${errorMessage}`);
 
             // We usually don't onClose() on error so the teacher doesn't lose their typing
         } finally {
@@ -89,7 +89,7 @@ const GradingModal = ({ isOpen, onClose, module, sectionID }) => {
                 <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                     <div>
                         <h2 className="text-2xl font-black text-slate-800 tracking-tight">Grade Input</h2>
-                        <p className="text-blue-600 font-bold text-sm uppercase">{module?.module_catalog_name}</p>
+                        <p className="text-blue-600 font-bold text-sm uppercase">{moduleName}</p>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
                         <X size={24} className="text-slate-500" />

@@ -97,7 +97,8 @@ const ModuleCatalog = ({ modules, sectionID }) => {
             <GradingModal
                 isOpen={!!selectedModule}
                 onClose={() => setSelectedModule(null)}
-                module={selectedModule}
+                moduleID={selectedModule.id}
+                moduleName={selectedModule.module_catalog_name}
                 sectionID={sectionID}
             />
         </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, Link } from 'react-router-dom';
 import { useSections } from '../../hooks/useSections'; // Path to hook above
 import { ChevronRight, Search, Plus, Users, Layers, MoreVertical, Calendar, Loader2, ArrowUpRight, ArrowLeft } from 'lucide-react';
 import RosterModal from './RosterModal';
@@ -69,9 +69,21 @@ const CourseContent = () => {
         <div className="space-y-6">
             {/* --- 1. Breadcrumbs (Always Visible) --- */}
             <nav className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
-                <span className="text-slate-400 hover:text-blue-600 cursor-pointer transition-colors">Courses</span>
+                {/* Clicking this now triggers the navigate function */}
+                <Link
+                    to={`/admin/courses`} // Using template literals to pass the ID
+                    onClick={(e) => e.stopPropagation()}
+                    className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors"
+                >
+                    <ArrowUpRight size={16} />
+                </Link>
+                
+
                 <ChevronRight size={14} className="text-slate-300" />
-                <span className="text-slate-800">Course ID: {courseId}</span>
+
+                <span className="text-slate-800">
+                    Course ID: {courseId}
+                </span>
             </nav>
 
             {/* --- 2. Header (Always Visible) --- */}

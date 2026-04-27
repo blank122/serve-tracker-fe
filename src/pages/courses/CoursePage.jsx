@@ -1,28 +1,39 @@
 import React, { useState } from 'react';
 import { useCourses } from '../../hooks/useCourses';
-import { Plus, Search, Download, Edit2, CheckCircle, ArrowUpRight, X, ChevronDown } from 'lucide-react';
+import { Plus, Search, Download, Edit2, CheckCircle, ArrowUpRight, ChevronDown, Trash2 } from 'lucide-react';
 import { Link } from "react-router-dom";
-import AddCourseModal from './AddCourse';
+import AddCourseModal from './AddCourse'; // This is now your unified CourseModal
 
 const CoursePage = () => {
-    const { courses, stats, loading } = useCourses();
+    const { courses, stats, loading, refresh } = useCourses();
     const [searchTerm, setSearchTerm] = useState('');
-    // 1. Add state for the active tab
     const [currentTab, setCurrentTab] = useState('starting');
-    // 1. ADD MODAL STATE
+
+    // 1. ALL MODAL STATE LIVES HERE IN THE PARENT
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingCourse, setEditingCourse] = useState(null);
 
     const filteredCourses = courses.filter(c =>
         c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         c.code.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // 2. Define tab configuration for easy mapping
     const tabs = [
         { id: 'starting', label: 'Active', count: filteredCourses.filter(c => c.status === 'starting').length },
         { id: 'completed', label: 'Finished', count: filteredCourses.filter(c => c.status === 'completed').length },
         { id: 'not yet started', label: 'Upcoming', count: filteredCourses.filter(c => c.status === 'not yet started').length },
     ];
+
+    // Helper functions for opening the modal cleanly
+    const handleOpenAddModal = () => {
+        setEditingCourse(null);
+        setIsModalOpen(true);
+    };
+
+    const handleOpenEditModal = (course) => {
+        setEditingCourse(course);
+        setIsModalOpen(true);
+    };
 
     return (
         <div className="space-y-6">
@@ -32,9 +43,8 @@ const CoursePage = () => {
                     <h1 className="text-2xl font-bold text-slate-800">Courses</h1>
                     <p className="text-slate-500 text-sm">Manage programs, sections, and progression in one place.</p>
                 </div>
-                {/* 2. TRIGGER MODAL */}
                 <button
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={handleOpenAddModal}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-blue-200 active:scale-95"
                 >
                     <Plus size={18} />
@@ -60,7 +70,7 @@ const CoursePage = () => {
                 />
             </div>
 
-            {/* --- 3. Tab Navigation --- */}
+            {/* --- Tab Navigation --- */}
             <div className="flex gap-8 border-b border-slate-100">
                 {tabs.map((tab) => (
                     <button
@@ -74,7 +84,6 @@ const CoursePage = () => {
                             }`}>
                             {tab.count}
                         </span>
-                        {/* Animated Underline */}
                         {currentTab === tab.id && (
                             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full" />
                         )}
@@ -82,13 +91,17 @@ const CoursePage = () => {
                 ))}
             </div>
 
-            {/* --- 4. Dynamic Content Section --- */}
+            {/* --- Dynamic Content Section --- */}
             <section className="min-h-[400px]">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredCourses
                         .filter(c => c.status === currentTab)
                         .map(course => (
-                            <CourseCard key={course.id} course={course} />
+                            <CourseCard
+                                key={course.id}
+                                course={course}
+                                onEdit={() => handleOpenEditModal(course)} // 2. Pass the function down as a prop
+                            />
                         ))
                     }
                 </div>
@@ -103,10 +116,13 @@ const CoursePage = () => {
                     </div>
                 )}
             </section>
-            {/* 3. ADD THE MODAL COMPONENT */}
+
+            {/* 3. ONLY ONE MODAL COMPONENT AT THE VERY BOTTOM */}
             <AddCourseModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
+                onRefresh={refresh}
+                courseToEdit={editingCourse}
             />
         </div>
     );
@@ -121,51 +137,76 @@ const StatChip = ({ label, count, color, dot }) => (
     </div>
 );
 
-const CourseCard = ({ course }) => (
-    <div className="bg-white border border-slate-100 p-6 rounded-[2rem] shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-        <div className="flex justify-between items-start mb-4">
-            <div>
-                <h4 className="font-black text-slate-800 text-lg uppercase tracking-tight">{course.code}</h4>
-                <p className="text-slate-400 text-xs font-medium line-clamp-1">{course.name || 'No description provided'}</p>
-            </div>
-            <span className={`text-[10px] font-black px-2 py-1 rounded-md uppercase ${course.status === 'starting' ? 'bg-green-50 text-green-600' :
-                course.status === 'completed' ? 'bg-blue-50 text-blue-600' :
-                    'bg-slate-100 text-slate-500'
-                }`}>
-                {course.status === 'starting' ? 'Active' :
-                    course.status === 'completed' ? 'Finished' :
-                        'Upcoming'}
-            </span>
-        </div>
-
-        {/* Section Chips */}
-        <div className="flex flex-wrap gap-2 mb-8">
-            {course.sections?.map(sec => (
-                <span key={sec.id} className="px-3 py-1 bg-slate-50 border border-slate-100 text-slate-500 text-[10px] font-bold rounded-full">
-                    {sec.section_name}
+// 4. Added onEdit prop, added missing 'return' keyword
+const CourseCard = ({ course, onEdit }) => {
+    return (
+        <div className="bg-white border border-slate-100 p-6 rounded-[2rem] shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+            <div className="flex justify-between items-start mb-4">
+                <div>
+                    <h4 className="font-black text-slate-800 text-lg uppercase tracking-tight">{course.code}</h4>
+                    <p className="text-slate-400 text-xs font-medium line-clamp-1">{course.name || 'No description provided'}</p>
+                </div>
+                <span className={`text-[10px] font-black px-2 py-1 rounded-md uppercase ${course.status === 'starting' ? 'bg-green-50 text-green-600' :
+                    course.status === 'completed' ? 'bg-blue-50 text-blue-600' :
+                        'bg-slate-100 text-slate-500'
+                    }`}>
+                    {course.status === 'starting' ? 'Active' :
+                        course.status === 'completed' ? 'Finished' :
+                            'Upcoming'}
                 </span>
-            ))}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex justify-between items-center pt-4 border-t border-slate-50">
-            <div className="flex gap-2">
-                <Link
-                    to={`/admin/course-content/${course.id}`} // Using template literals to pass the ID
-                    state={{ courseName: course.name }} // <-- Attach the name here
-                    onClick={(e) => e.stopPropagation()}
-                    className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors"
-                >
-                    <ArrowUpRight size={16} />
-                </Link>
-                <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors"><Edit2 size={16} /></button>
-                <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors"><Download size={16} /></button>
             </div>
-            <button className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all">
-                <CheckCircle size={16} />
-            </button>
+
+            {/* Section Chips */}
+            <div className="flex flex-wrap gap-2 mb-8">
+                {course.sections?.map(sec => (
+                    <span key={sec.id} className="px-3 py-1 bg-slate-50 border border-slate-100 text-slate-500 text-[10px] font-bold rounded-full">
+                        {sec.section_name}
+                    </span>
+                ))}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-between items-center pt-4 border-t border-slate-50">
+                <div className="flex gap-2">
+                    <Link
+                        to={`/admin/course-content/${course.id}`}
+                        state={{ courseName: course.name }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors"
+                    >
+                        <ArrowUpRight size={16} />
+                    </Link>
+
+                    {/* Trigger the onEdit prop passed from parent */}
+                    <button
+                        className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit();
+                        }}
+                    >
+                        <Edit2 size={16} />
+                    </button>
+
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm("Are you sure you want to delete this course?")) {
+                                onDelete(course.id); // Make sure onDelete is defined if you use this!
+                            }
+                        }}
+                        className="p-2 hover:bg-red-50 hover:text-red-500 rounded-lg text-slate-400 transition-colors"
+                        title="Delete Course"
+                    >
+                        <Trash2 size={16} />
+                    </button>
+                </div>
+                <button className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all">
+                    <CheckCircle size={16} />
+                </button>
+            </div>
         </div>
-    </div>
-);
+    );
+};
 
 export default CoursePage;

@@ -543,18 +543,11 @@ const RosterModal = ({ isOpen, onClose, section, onStudentUpdate }) => {
                                                 onClick={() => handleDropStudent(student.id, `${student.first_name} ${student.last_name}`)}
                                                 disabled={deleteLoading}
                                                 className="p-1.5 hover:bg-yellow-50 rounded-lg text-yellow-600 transition-colors"
-                                                title="Drop student (soft delete)"
+                                                title="Drop student"
                                             >
                                                 <UserMinus size={14} />
                                             </button>
-                                            <button
-                                                onClick={() => handleHardDelete(student.id, `${student.first_name} ${student.last_name}`)}
-                                                disabled={deleteLoading}
-                                                className="p-1.5 hover:bg-red-50 rounded-lg text-red-500 transition-colors"
-                                                title="Permanently delete"
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
+                                            
                                         </div>
                                     </>
                                 )}

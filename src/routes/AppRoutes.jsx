@@ -19,6 +19,9 @@ import RegisterPage from '../pages/authentication/RegisterPage';
 import AdminUsersPage from '../pages/admin/AdminUserPage';
 import ModuleCatalog from '../pages/courses/ModuleCatalog';
 import ModuleCatalogPage from '../pages/admin/ModuleCatalog';
+import InstructorAssignments from '../pages/instructor/InstructorAssignments';
+import TestComponent from '../pages/instructor/TestComponent';
+import SettingsPage from '../pages/SettingsPage';
 
 const ProtectedRoute = ({ allowedRoles }) => {
     const { user } = useAuth();
@@ -50,11 +53,35 @@ const AppRoutes = () => {
     return (
         <AuthProvider>
             <BrowserRouter>
-                <Toaster position="top-center" />
+                <Toaster
+                    position="top-center"
+                    toastOptions={{
+                        // Default options for all toasts
+                        duration: 4000, // 4 seconds
+                        style: {
+                            background: '#fff',
+                            color: '#363636',
+                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                            borderRadius: '8px',
+                            padding: '12px 24px',
+                        },
+                        // You can also customize specific types globally
+                        success: {
+                            duration: 3000,
+                            theme: {
+                                primary: 'green',
+                            },
+                        },
+                        error: {
+                            duration: 5000, // Keep errors on screen slightly longer
+                        },
+                    }}
+                />
                 <Routes>
                     <Route path="/" element={<LoginPage />} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/settings" element={<SettingsPage />} />
 
                     {/* Admin Only */}
                     <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
@@ -71,9 +98,10 @@ const AppRoutes = () => {
                     </Route>
 
                     {/* Instructor & Admin */}
-                    <Route element={<ProtectedRoute allowedRoles={['instructor', 'admin']} />}>
+                    <Route element={<ProtectedRoute allowedRoles={['instructor']} />}>
                         <Route path="instructor" element={<InstructorLayout />}>
                             <Route path="dashboard" element={<InstructorDashboard />} />
+                            <Route path="courses" element={<InstructorAssignments />} />
                         </Route>
                     </Route>
                     {/* Registrar */}
