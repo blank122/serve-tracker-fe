@@ -22,6 +22,7 @@ import ModuleCatalogPage from '../pages/admin/ModuleCatalog';
 import InstructorAssignments from '../pages/instructor/InstructorAssignments';
 import TestComponent from '../pages/instructor/TestComponent';
 import SettingsPage from '../pages/SettingsPage';
+import AcademicDirectory from '../pages/courses/AcademicDirectory';
 
 const ProtectedRoute = ({ allowedRoles }) => {
     const { user } = useAuth();
@@ -92,6 +93,7 @@ const AppRoutes = () => {
                             <Route path="section/:sectionId/modules" element={<SectionModulePage />} />
                             <Route path="users" element={<AdminUsersPage />} />
                             <Route path="subjects" element={<ModuleCatalogPage />} />
+                            <Route path="academic-directory" element={<AcademicDirectory />} />
 
 
                         </Route>

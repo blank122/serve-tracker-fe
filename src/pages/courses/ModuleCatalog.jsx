@@ -9,6 +9,7 @@ import GradingModal from './GradingModal';
 const ModuleCatalog = ({ modules, sectionID }) => {
 
     const [selectedModule, setSelectedModule] = useState(null);
+    
     // Group modules by their module_type.module_name
     const groupedModules = useMemo(() => {
         return modules.reduce((acc, curr) => {
@@ -83,7 +84,7 @@ const ModuleCatalog = ({ modules, sectionID }) => {
                                         </div>
                                     </div>
                                     <button 
-                                    onClick={() => setSelectedModule(item)} // This triggers the modal
+                                    onClick={() => setSelectedModule(item)} // This triggers the modal and sets the item data
                                     className="h-10 w-10 flex items-center justify-center bg-slate-50 rounded-xl text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
                                         <ChevronRight size={18} />
                                     </button>
@@ -94,11 +95,12 @@ const ModuleCatalog = ({ modules, sectionID }) => {
                 </section>
             ))}
 
+            {/* Changed modules.id to selectedModule?.id and modules.module_catalog_name to selectedModule?.module_catalog_name */}
             <GradingModal
                 isOpen={!!selectedModule}
                 onClose={() => setSelectedModule(null)}
-                moduleID={selectedModule.id}
-                moduleName={selectedModule.module_catalog_name}
+                moduleID={selectedModule?.id}
+                moduleName={selectedModule?.module_catalog_name}
                 sectionID={sectionID}
             />
         </div>
