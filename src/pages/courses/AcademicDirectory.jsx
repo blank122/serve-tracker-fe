@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAcademicDirectory } from '../../hooks/useAcademicDirectory';
+import StudentProfileModal from './StudentProfileModal'; // Add this import
 
 export default function AcademicDirectory() {
     const [activeTab, setActiveTab] = useState('students');
@@ -42,6 +43,14 @@ export default function AcademicDirectory() {
         if (currentPage > 1) setCurrentPage((prev) => prev - 1);
     };
 
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedStudentId, setSelectedStudentId] = useState(null);
+
+    const openStudentModal = (studentId) => {
+        setSelectedStudentId(studentId);
+        setIsModalOpen(true);
+    };
+
     return (
         <div className="p-6 max-w-7xl mx-auto w-full">
             {/* Header & Search */}
@@ -74,8 +83,8 @@ export default function AcademicDirectory() {
                             setSearchTerm('');
                         }}
                         className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'students'
-                                ? 'border-blue-500 text-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            ? 'border-blue-500 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                             }`}
                     >
                         Student Roster
@@ -86,8 +95,8 @@ export default function AcademicDirectory() {
                             setSearchTerm('');
                         }}
                         className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'lessons'
-                                ? 'border-blue-500 text-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            ? 'border-blue-500 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                             }`}
                     >
                         Lesson Repository
@@ -108,6 +117,8 @@ export default function AcademicDirectory() {
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+
                                     </>
                                 ) : (
                                     <>
@@ -159,6 +170,14 @@ export default function AcademicDirectory() {
                                                     >
                                                         {item.status || 'Active'}
                                                     </span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                    <button
+                                                        onClick={() => openStudentModal(item.student_id)}
+                                                        className="text-blue-600 hover:text-blue-900 font-semibold"
+                                                    >
+                                                        View Details
+                                                    </button>
                                                 </td>
                                             </>
                                         ) : (
@@ -256,7 +275,13 @@ export default function AcademicDirectory() {
                         </div>
                     </div>
                 )}
+                <StudentProfileModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    studentId={selectedStudentId}
+                />
             </div>
+
         </div>
     );
 }
