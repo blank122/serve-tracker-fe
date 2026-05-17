@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAcademicDirectory } from '../../hooks/useAcademicDirectory';
 import StudentProfileModal from './StudentProfileModal'; // Add this import
+import LessonRosterModal from './LessonRosterModal'; // <-- NEW
 
 export default function AcademicDirectory() {
     const [activeTab, setActiveTab] = useState('students');
@@ -49,6 +50,15 @@ export default function AcademicDirectory() {
     const openStudentModal = (studentId) => {
         setSelectedStudentId(studentId);
         setIsModalOpen(true);
+    };
+
+    // NEW: Roster Modal States
+    const [isRosterModalOpen, setIsRosterModalOpen] = useState(false);
+    const [selectedLesson, setSelectedLesson] = useState(null);
+
+    const openRosterModal = (lesson) => {
+        setSelectedLesson(lesson);
+        setIsRosterModalOpen(true);
     };
 
     return (
@@ -126,6 +136,8 @@ export default function AcademicDirectory() {
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lesson Name</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instructor</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section / Course</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+
                                     </>
                                 )}
                             </tr>
@@ -192,6 +204,14 @@ export default function AcademicDirectory() {
                                                         <span>{item.section_name}</span>
                                                         <span className="text-xs text-gray-400">{item.course_code}</span>
                                                     </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                    <button
+                                                        onClick={() => openRosterModal(item)}
+                                                        className="text-indigo-600 hover:text-indigo-900 font-semibold"
+                                                    >
+                                                        View Roster
+                                                    </button>
                                                 </td>
                                             </>
                                         )}
@@ -280,6 +300,13 @@ export default function AcademicDirectory() {
                     onClose={() => setIsModalOpen(false)}
                     studentId={selectedStudentId}
                 />
+
+                <LessonRosterModal
+                    isOpen={isRosterModalOpen}
+                    onClose={() => setIsRosterModalOpen(false)}
+                    lesson={selectedLesson}
+                />
+
             </div>
 
         </div>

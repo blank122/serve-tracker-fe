@@ -1,30 +1,47 @@
+// pages/CoursePage.js
 import React, { useState } from 'react';
 import { useCourses } from '../../hooks/useCourses';
-import { Plus, Search, Download, Edit2, CheckCircle, ArrowUpRight, ChevronDown, Trash2 } from 'lucide-react';
+import { Plus, Search, Edit2, CheckCircle, ArrowUpRight, Trash2, Archive } from 'lucide-react';
 import { Link } from "react-router-dom";
-import AddCourseModal from './AddCourse'; // This is now your unified CourseModal
+import AddCourseModal from './AddCourse'; 
 
 const CoursePage = () => {
-    const { courses, stats, loading, refresh } = useCourses();
+    const { courses, stats, loading, refresh, deleteCourse } = useCourses();
     const [searchTerm, setSearchTerm] = useState('');
-    const [currentTab, setCurrentTab] = useState('starting');
+    const [currentTab, setCurrentTab] = useState('starting'); // starting, completed, not yet started, archived
 
-    // 1. ALL MODAL STATE LIVES HERE IN THE PARENT
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingCourse, setEditingCourse] = useState(null);
 
-    const filteredCourses = courses.filter(c =>
-        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.code.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // CRITICAL FIX: Separate archived from active courses based ONLY on is_deleted
+    const activeCourses = courses.filter(c => c.is_deleted !== true);
+    const archivedCoursesOnly = courses.filter(c => c.is_deleted === true);
 
+    // Filter courses based on current tab
+    const filteredCourses = (() => {
+        const matchesSearch = (course) =>
+            course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            course.code.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        if (currentTab === 'archived') {
+            // Show ONLY archived courses
+            return archivedCoursesOnly.filter(matchesSearch);
+        }
+        
+        // For active tabs, show ONLY active courses that match the status
+        return activeCourses.filter(course => 
+            course.status === currentTab && matchesSearch(course)
+        );
+    })();
+
+    // Tab configuration with correct counts
     const tabs = [
-        { id: 'starting', label: 'Active', count: filteredCourses.filter(c => c.status === 'starting').length },
-        { id: 'completed', label: 'Finished', count: filteredCourses.filter(c => c.status === 'completed').length },
-        { id: 'not yet started', label: 'Upcoming', count: filteredCourses.filter(c => c.status === 'not yet started').length },
+        { id: 'starting', label: 'Active', count: activeCourses.filter(c => c.status === 'starting').length },
+        { id: 'completed', label: 'Finished', count: activeCourses.filter(c => c.status === 'completed').length },
+        { id: 'not yet started', label: 'Upcoming', count: activeCourses.filter(c => c.status === 'not yet started').length },
+        { id: 'archived', label: 'Archived', count: archivedCoursesOnly.length },
     ];
 
-    // Helper functions for opening the modal cleanly
     const handleOpenAddModal = () => {
         setEditingCourse(null);
         setIsModalOpen(true);
@@ -35,9 +52,17 @@ const CoursePage = () => {
         setIsModalOpen(true);
     };
 
+    const handleDeleteCourse = async (courseId) => {
+        try {
+            await deleteCourse(courseId);
+        } catch (error) {
+            alert("Could not archive the course. Please try again.");
+        }
+    };
+
     return (
         <div className="space-y-6">
-            {/* --- Header Section --- */}
+            {/* Header Section */}
             <div className="flex justify-between items-start">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800">Courses</h1>
@@ -52,14 +77,15 @@ const CoursePage = () => {
                 </button>
             </div>
 
-            {/* --- Stat Chips --- */}
+            {/* Stat Chips */}
             <div className="flex gap-3">
-                <StatChip label="Total" count={stats.total} color="bg-slate-100 text-slate-600" />
+                <StatChip label="Total Live" count={stats.total} color="bg-slate-100 text-slate-600" />
                 <StatChip label="Active" count={stats.active} color="bg-green-50 text-green-600" dot />
                 <StatChip label="Finished" count={stats.finished} color="bg-blue-50 text-blue-600" />
+                <StatChip label="Archived" count={stats.archived} color="bg-amber-50 text-amber-600" />
             </div>
 
-            {/* --- Search Bar --- */}
+            {/* Search Bar */}
             <div className="relative group">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
                 <input
@@ -70,7 +96,7 @@ const CoursePage = () => {
                 />
             </div>
 
-            {/* --- Tab Navigation --- */}
+            {/* Tab Navigation */}
             <div className="flex gap-8 border-b border-slate-100">
                 {tabs.map((tab) => (
                     <button
@@ -91,33 +117,33 @@ const CoursePage = () => {
                 ))}
             </div>
 
-            {/* --- Dynamic Content Section --- */}
+            {/* Dynamic Content Section */}
             <section className="min-h-[400px]">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredCourses
-                        .filter(c => c.status === currentTab)
-                        .map(course => (
-                            <CourseCard
-                                key={course.id}
-                                course={course}
-                                onEdit={() => handleOpenEditModal(course)} // 2. Pass the function down as a prop
-                            />
-                        ))
-                    }
+                    {filteredCourses.map(course => (
+                        <CourseCard
+                            key={course.id}
+                            course={course}
+                            onEdit={() => handleOpenEditModal(course)}
+                            onDelete={handleDeleteCourse} 
+                            isArchivedView={currentTab === 'archived'}
+                        />
+                    ))}
                 </div>
 
                 {/* Empty State */}
-                {filteredCourses.filter(c => c.status === currentTab).length === 0 && (
+                {filteredCourses.length === 0 && (
                     <div className="flex flex-col items-center justify-center py-20 text-slate-400">
                         <div className="bg-slate-50 p-4 rounded-full mb-4">
-                            <Search size={32} />
+                            {currentTab === 'archived' ? <Archive size={32} /> : <Search size={32} />}
                         </div>
-                        <p className="font-medium text-sm">No {currentTab.replace('starting', 'active')} courses found.</p>
+                        <p className="font-medium text-sm">
+                            No {currentTab === 'archived' ? 'archived' : currentTab.replace('starting', 'active')} courses found.
+                        </p>
                     </div>
                 )}
             </section>
 
-            {/* 3. ONLY ONE MODAL COMPONENT AT THE VERY BOTTOM */}
             <AddCourseModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
@@ -128,8 +154,7 @@ const CoursePage = () => {
     );
 };
 
-// --- Sub-Components ---
-
+// Sub-Components
 const StatChip = ({ label, count, color, dot }) => (
     <div className={`px-4 py-1.5 rounded-full flex items-center gap-2 font-bold text-xs ${color}`}>
         {dot && <div className="w-2 h-2 rounded-full bg-current animate-pulse" />}
@@ -137,26 +162,31 @@ const StatChip = ({ label, count, color, dot }) => (
     </div>
 );
 
-// 4. Added onEdit prop, added missing 'return' keyword
-const CourseCard = ({ course, onEdit }) => {
+const CourseCard = ({ course, onEdit, onDelete, isArchivedView }) => {
     return (
-        <div className="bg-white border border-slate-100 p-6 rounded-[2rem] shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+        <div className={`bg-white border p-6 rounded-[2rem] shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group ${
+            isArchivedView ? 'border-amber-100 opacity-80' : 'border-slate-100'
+        }`}>
             <div className="flex justify-between items-start mb-4">
                 <div>
                     <h4 className="font-black text-slate-800 text-lg uppercase tracking-tight">{course.code}</h4>
                     <p className="text-slate-400 text-xs font-medium line-clamp-1">{course.name || 'No description provided'}</p>
                 </div>
-                <span className={`text-[10px] font-black px-2 py-1 rounded-md uppercase ${course.status === 'starting' ? 'bg-green-50 text-green-600' :
-                    course.status === 'completed' ? 'bg-blue-50 text-blue-600' :
-                        'bg-slate-100 text-slate-500'
+                
+                {isArchivedView ? (
+                    <span className="text-[10px] font-black px-2 py-1 rounded-md uppercase bg-amber-50 text-amber-700">
+                        Archived
+                    </span>
+                ) : (
+                    <span className={`text-[10px] font-black px-2 py-1 rounded-md uppercase ${
+                        course.status === 'starting' ? 'bg-green-50 text-green-600' :
+                        course.status === 'completed' ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-500'
                     }`}>
-                    {course.status === 'starting' ? 'Active' :
-                        course.status === 'completed' ? 'Finished' :
-                            'Upcoming'}
-                </span>
+                        {course.status === 'starting' ? 'Active' : course.status === 'completed' ? 'Finished' : 'Upcoming'}
+                    </span>
+                )}
             </div>
 
-            {/* Section Chips */}
             <div className="flex flex-wrap gap-2 mb-8">
                 {course.sections?.map(sec => (
                     <span key={sec.id} className="px-3 py-1 bg-slate-50 border border-slate-100 text-slate-500 text-[10px] font-bold rounded-full">
@@ -165,45 +195,49 @@ const CourseCard = ({ course, onEdit }) => {
                 ))}
             </div>
 
-            {/* Action Buttons */}
             <div className="flex justify-between items-center pt-4 border-t border-slate-50">
                 <div className="flex gap-2">
-                    <Link
-                        to={`/admin/course-content/${course.id}`}
-                        state={{ courseName: course.name }}
-                        onClick={(e) => e.stopPropagation()}
-                        className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors"
-                    >
-                        <ArrowUpRight size={16} />
-                    </Link>
+                    {!isArchivedView && (
+                        <>
+                            <Link
+                                to={`/admin/course-content/${course.id}`}
+                                state={{ courseName: course.name }}
+                                onClick={(e) => e.stopPropagation()}
+                                className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors"
+                            >
+                                <ArrowUpRight size={16} />
+                            </Link>
 
-                    {/* Trigger the onEdit prop passed from parent */}
-                    <button
-                        className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onEdit();
-                        }}
-                    >
-                        <Edit2 size={16} />
-                    </button>
+                            <button
+                                className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onEdit();
+                                }}
+                            >
+                                <Edit2 size={16} />
+                            </button>
 
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            if (window.confirm("Are you sure you want to delete this course?")) {
-                                onDelete(course.id); // Make sure onDelete is defined if you use this!
-                            }
-                        }}
-                        className="p-2 hover:bg-red-50 hover:text-red-500 rounded-lg text-slate-400 transition-colors"
-                        title="Delete Course"
-                    >
-                        <Trash2 size={16} />
-                    </button>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (window.confirm("Are you sure you want to archive this course?")) {
+                                        onDelete(course.id);
+                                    }
+                                }}
+                                className="p-2 hover:bg-red-50 hover:text-red-500 rounded-lg text-slate-400 transition-colors"
+                                title="Archive Course"
+                            >
+                                <Trash2 size={16} />
+                            </button>
+                        </>
+                    )}
                 </div>
-                <button className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all">
-                    <CheckCircle size={16} />
-                </button>
+                {!isArchivedView && (
+                    <button className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all">
+                        <CheckCircle size={16} />
+                    </button>
+                )}
             </div>
         </div>
     );

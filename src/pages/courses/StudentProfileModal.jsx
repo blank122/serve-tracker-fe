@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, User, BookOpen, GraduationCap, Award, Clock } from 'lucide-react';
+import { X, User, BookOpen, GraduationCap, Award, Clock, CheckCircle2 } from 'lucide-react';
 import api from '../../api/axios'; // IMPORTANT: Adjust this path to match your project structure!
 
 const StudentProfileModal = ({ isOpen, onClose, studentId }) => {
@@ -41,7 +41,7 @@ const StudentProfileModal = ({ isOpen, onClose, studentId }) => {
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
             <div className="bg-white w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                
+
                 {/* Modal Header */}
                 <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                     <div className="flex items-center gap-4">
@@ -64,7 +64,7 @@ const StudentProfileModal = ({ isOpen, onClose, studentId }) => {
                         <div className="text-center py-20 font-bold text-slate-400">Loading Profile Details...</div>
                     ) : (
                         <div className="space-y-8">
-                            
+
                             {/* Profile Info Cards */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                 {/* Name */}
@@ -114,7 +114,7 @@ const StudentProfileModal = ({ isOpen, onClose, studentId }) => {
                                     <BookOpen size={20} className="text-slate-400" />
                                     Enrolled Subjects
                                 </h3>
-                                
+
                                 {profile.enrolled_subjects?.length === 0 ? (
                                     <div className="p-8 text-center rounded-2xl border border-dashed border-slate-300 text-slate-400 font-medium">
                                         No subjects currently assigned to this section.
@@ -126,7 +126,10 @@ const StudentProfileModal = ({ isOpen, onClose, studentId }) => {
                                                 <tr className="bg-slate-50 text-left text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-200">
                                                     <th className="py-4 pl-6">Subject Name</th>
                                                     <th className="py-4">Instructor</th>
-                                                    <th className="py-4 pr-6 text-right">Required Hours</th>
+                                                    <th className="py-4 text-center">PE (Raw)</th>
+                                                    <th className="py-4 text-center">Modular (Raw)</th>
+                                                    <th className="py-4 text-center">Status</th>
+                                                    <th className="py-4 pr-6 text-right">Req. Hours</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-100 bg-white">
@@ -138,6 +141,28 @@ const StudentProfileModal = ({ isOpen, onClose, studentId }) => {
                                                         <td className="py-4 text-slate-500 text-sm font-medium">
                                                             {sub.instructor_name}
                                                         </td>
+
+                                                        {/* Grades */}
+                                                        <td className="py-4 text-center font-mono font-bold text-slate-700">
+                                                            {sub.pe_raw_score !== null ? sub.pe_raw_score : '-'}
+                                                        </td>
+                                                        <td className="py-4 text-center font-mono font-bold text-slate-700">
+                                                            {sub.modular_raw_score !== null ? sub.modular_raw_score : '-'}
+                                                        </td>
+
+                                                        {/* Status */}
+                                                        <td className="py-4 text-center">
+                                                            {sub.is_graded ? (
+                                                                <span className="inline-flex items-center gap-1 text-emerald-600 text-[10px] font-black uppercase bg-emerald-50 px-2 py-1 rounded-md">
+                                                                    <CheckCircle2 size={12} /> Graded
+                                                                </span>
+                                                            ) : (
+                                                                <span className="inline-flex items-center gap-1 text-amber-500 text-[10px] font-black uppercase bg-amber-50 px-2 py-1 rounded-md">
+                                                                    Pending
+                                                                </span>
+                                                            )}
+                                                        </td>
+
                                                         <td className="py-4 pr-6 text-right">
                                                             <span className="inline-flex items-center gap-1 text-slate-600 bg-slate-100 px-2 py-1 rounded-md text-xs font-bold font-mono">
                                                                 <Clock size={12} />
@@ -157,8 +182,8 @@ const StudentProfileModal = ({ isOpen, onClose, studentId }) => {
 
                 {/* Modal Footer */}
                 <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end">
-                    <button 
-                        onClick={onClose} 
+                    <button
+                        onClick={onClose}
                         className="px-8 py-3 bg-slate-800 text-white rounded-2xl font-black shadow-lg shadow-slate-200 hover:bg-slate-700 active:scale-95 transition-all"
                     >
                         Close Profile
